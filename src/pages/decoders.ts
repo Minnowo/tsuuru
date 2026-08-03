@@ -64,17 +64,49 @@ export const decoders = [
   },
   {
     name: "Hexadecimal String",
-    decode: (v: string) =>
-      (v.match(/[0-9a-f]{2}/gi) ?? [])
-        .map((x) => String.fromCharCode(parseInt(x, 16)))
-        .join(""),
+    decode: (v: string) => {
+      const cleaned = v.replace(/\s|0x/gi, "");
+      const pairs = cleaned.match(/[0-9a-f]{2}/gi);
+
+      if (!pairs) {
+        return v;
+      }
+
+      const bytes = pairs.map((x) => parseInt(x, 16));
+
+      return new TextDecoder().decode(new Uint8Array(bytes));
+    },
   },
   {
     name: "Quoted-printable",
-    decode: (v: string) =>
-      v.replace(/=([0-9A-F]{2})/gi, (_, x) =>
-        String.fromCharCode(parseInt(x, 16)),
-      ),
+    decode: (v: string) => {
+      const bytes: number[] = [];
+
+      for (let i = 0; i < v.length; i++) {
+        if (v[i] === "=") {
+          // Soft line break: "=\r\n" or "=\n" is a line continuation, not a byte.
+          if (v[i + 1] === "\r" && v[i + 2] === "\n") {
+            i += 2;
+            continue;
+          }
+          if (v[i + 1] === "\n") {
+            i += 1;
+            continue;
+          }
+
+          const hex = v.slice(i + 1, i + 3);
+          if (/^[0-9A-F]{2}$/i.test(hex)) {
+            bytes.push(parseInt(hex, 16));
+            i += 2;
+            continue;
+          }
+        }
+
+        bytes.push(v.charCodeAt(i));
+      }
+
+      return new TextDecoder().decode(new Uint8Array(bytes));
+    },
   },
   {
     name: "Unicode Escape",

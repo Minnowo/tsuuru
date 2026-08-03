@@ -78,14 +78,27 @@ describe("Hexadecimal String", () => {
     assert.equal(decode("Hexadecimal String", "0x68 0x69"), "hi");
   });
 
-  it("returns empty string when no hex pairs are found", () => {
-    assert.equal(decode("Hexadecimal String", "zz"), "");
+  it("decodes multi-byte UTF-8 sequences", () => {
+    assert.equal(decode("Hexadecimal String", "43 61 66 c3 a9"), "Café");
+  });
+
+  it("leaves the input unchanged when no hex pairs are found", () => {
+    assert.equal(decode("Hexadecimal String", "zz"), "zz");
   });
 });
 
 describe("Quoted-printable", () => {
-  it("decodes =XX escapes to raw bytes (not UTF-8 aware)", () => {
+  it("decodes =XX escapes", () => {
     assert.equal(decode("Quoted-printable", "a=41b"), "aAb");
+  });
+
+  it("decodes multi-byte UTF-8 sequences", () => {
+    assert.equal(decode("Quoted-printable", "Caf=C3=A9"), "Café");
+  });
+
+  it("treats soft line breaks as line continuations", () => {
+    assert.equal(decode("Quoted-printable", "hello=\r\nworld"), "helloworld");
+    assert.equal(decode("Quoted-printable", "hello=\nworld"), "helloworld");
   });
 
   it("leaves unescaped text untouched", () => {

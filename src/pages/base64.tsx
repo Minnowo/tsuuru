@@ -1,46 +1,47 @@
 import { useState } from "preact/hooks";
 
+const save = (key: string, value: string) => {
+  sessionStorage.setItem(`base64-${key}`, value);
+};
+const load = (key: string): string | null => {
+  return sessionStorage.getItem(`base64-${key}`);
+};
+
 export const Base64Page = () => {
   const [error, setError] = useState("");
-  const [input, setInput] = useState(
-    sessionStorage.getItem("base64-input") ?? "",
+  const [input, _setInput] = useState(load("input") ?? "");
+  const [output, _setOutput] = useState(load("output") ?? "");
+  const [decodeEachLine, _setDecodeEachLine] = useState(
+    load("decode-each-line") === "true",
   );
-  const [output, setOutput] = useState(
-    sessionStorage.getItem("base64-output") ?? "",
+  const [useWordWrap, _setUseWordWrap] = useState(
+    load("decode-word-wrap") !== "false",
   );
-  const [decodeEachLine, setDecodeEachLine] = useState(
-    sessionStorage.getItem("base64-decode-each-line") === "true",
-  );
-  const [useWordWrap, setUseWordWrap] = useState(
-    sessionStorage.getItem("base64-decode-word-wrap") !== "false",
-  );
-  const [urlSafe, setUrlSafe] = useState(
-    sessionStorage.getItem("base64-decode-url-safe") === "true",
-  );
+  const [urlSafe, _setUrlSafe] = useState(load("decode-url-safe") === "true");
 
   const updateInput = (value: string) => {
-    setInput(value);
-    sessionStorage.setItem("base64-input", value);
+    save("input", value);
+    _setInput(value);
   };
 
   const updateOutput = (value: string) => {
-    setOutput(value);
-    sessionStorage.setItem("base64-output", value);
+    save("output", value);
+    _setOutput(value);
   };
 
   const updateDecodeEachLine = (value: boolean) => {
-    setDecodeEachLine(value);
-    sessionStorage.setItem("base64-decode-each-line", String(value));
+    save("decode-each-line", String(value));
+    _setDecodeEachLine(value);
   };
 
   const updateWordWrap = (value: boolean) => {
-    setUseWordWrap(value);
-    sessionStorage.setItem("base64-decode-word-wrap", String(value));
+    save("decode-word-wrap", String(value));
+    _setUseWordWrap(value);
   };
 
   const updateUrlSafe = (value: boolean) => {
-    setUrlSafe(value);
-    sessionStorage.setItem("base64-decode-url-safe", String(value));
+    save("decode-url-safe", String(value));
+    _setUrlSafe(value);
   };
 
   const encode = () => {

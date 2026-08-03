@@ -16,43 +16,42 @@ const normalizePythonDict = (value: string) => {
   );
 };
 
-export const JsonFormatterPage = () => {
-  const [input, setInput] = useState(
-    sessionStorage.getItem("json-input") ?? "",
-  );
+const save = (key: string, value: string) => {
+  sessionStorage.setItem(`json-${key}`, value);
+};
+const load = (key: string): string | null => {
+  return sessionStorage.getItem(`json-${key}`);
+};
 
-  const [output, setOutput] = useState(
-    sessionStorage.getItem("json-output") ?? "",
-  );
+export const JsonFormatterPage = () => {
+  const [input, _setInput] = useState(load("input") ?? "");
+
+  const [output, _setOutput] = useState(load("output") ?? "");
 
   const [error, setError] = useState("");
 
-  const [indent, setIndent] = useState(
-    Number(sessionStorage.getItem("json-indent") ?? "2"),
-  );
+  const [indent, _setIndent] = useState(Number(load("indent") ?? "2"));
 
-  const [sortKeys, setSortKeys] = useState(
-    sessionStorage.getItem("json-sort-keys") === "true",
-  );
+  const [sortKeys, _setSortKeys] = useState(load("sort-keys") === "true");
 
   const updateInput = (value: string) => {
-    setInput(value);
-    sessionStorage.setItem("json-input", value);
+    save("input", value);
+    _setInput(value);
   };
 
   const updateOutput = (value: string) => {
-    setOutput(value);
-    sessionStorage.setItem("json-output", value);
+    save("output", value);
+    _setOutput(value);
   };
 
   const updateIndent = (value: number) => {
-    setIndent(value);
-    sessionStorage.setItem("json-indent", String(value));
+    save("indent", String(value));
+    _setIndent(value);
   };
 
   const updateSortKeys = (value: boolean) => {
-    setSortKeys(value);
-    sessionStorage.setItem("json-sort-keys", String(value));
+    save("sort-keys", String(value));
+    _setSortKeys(value);
   };
 
   const sortObjectKeys = (obj: unknown): unknown => {

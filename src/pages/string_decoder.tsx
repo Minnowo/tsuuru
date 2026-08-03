@@ -95,12 +95,29 @@ const decoders = [
   },
 ];
 
+const save = (key: string, value: string) => {
+  sessionStorage.setItem(`string-decoder-${key}`, value);
+};
+const load = (key: string): string | null => {
+  return sessionStorage.getItem(`string-decoder-${key}`);
+};
+
 export const StringDecodePage = () => {
-  const [input, setInput] = useState(
-    sessionStorage.getItem("string-decoder-input") ?? "",
+  const [input, _setInput] = useState(load("input") ?? "");
+
+  const [results, _setResults] = useState<DecoderResult[]>(
+    JSON.parse(load("results") ?? "[]"),
   );
 
-  const [results, setResults] = useState<DecoderResult[]>([]);
+  const setInput = (value: string) => {
+    save("input", value);
+    _setInput(value);
+  };
+
+  const setResults = (value: DecoderResult[]) => {
+    save("results", JSON.stringify(value));
+    _setResults(value);
+  };
 
   const runDecoders = () => {
     const output = decoders.map((decoder) => {
@@ -144,7 +161,6 @@ export const StringDecodePage = () => {
           const value = (e.target as HTMLTextAreaElement).value;
 
           setInput(value);
-          sessionStorage.setItem("string-decoder-input", value);
         }}
       />
 

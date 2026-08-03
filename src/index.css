@@ -1,0 +1,200 @@
+@import "tailwindcss";
+
+@theme {
+  --color-c-rosewater: rgb(212, 212, 212);
+  --color-c-flamingo: rgb(209, 105, 105);
+  --color-c-pink: rgb(197, 134, 192);
+  --color-c-mauve: rgb(128, 128, 128);
+  --color-c-red: rgb(177, 95, 91);
+  --color-c-maroon: rgb(181, 206, 168);
+  --color-c-peach: rgb(209, 154, 124);
+  --color-c-yellow: rgb(215, 186, 125);
+  --color-c-green: rgb(106, 153, 85);
+  --color-c-teal: rgb(78, 201, 176);
+  --color-c-sky: rgb(86, 156, 214);
+  --color-c-sapphire: rgb(156, 220, 254);
+  --color-c-blue: rgb(86, 156, 214);
+  --color-c-lavender: rgb(197, 134, 192);
+
+  --color-c-accent2: rgb(215, 186, 125);
+  --color-c-accent1: rgb(215, 186, 125);
+  --color-c-accent0: rgb(215, 186, 125);
+
+  --color-c-text: rgb(212, 212, 212);
+  --color-c-subtext1: rgb(200, 200, 200);
+  --color-c-subtext0: rgb(154, 154, 154);
+
+  --color-c-overlay2: rgb(122, 122, 122);
+  --color-c-overlay1: rgb(98, 98, 98);
+  --color-c-overlay0: rgb(77, 77, 77);
+
+  --color-c-surface2: rgb(150, 120, 70);
+  --color-c-surface1: rgb(73, 73, 73);
+  --color-c-surface0: rgb(59, 59, 59);
+
+  --color-c-base: rgb(28, 28, 28);
+  --color-c-mantle: rgb(38, 38, 38);
+  --color-c-crust: rgb(31, 31, 31);
+}
+
+@layer base {
+  *,
+  ::after,
+  ::before {
+    box-sizing: border-box;
+  }
+
+  :root {
+    --base-font-size: 16px;
+  }
+
+  html {
+    color: var(--color-c-text);
+    background-color: var(--color-c-base);
+    font-size: var(--base-font-size);
+    border-color: var(--color-c-lavender);
+    @apply border-4 border-solid;
+  }
+
+  html,
+  body {
+    min-width: 100%;
+    min-height: 100%;
+    height: fit-content;
+    margin: 0;
+    padding: 0;
+  }
+
+  a {
+    text-decoration: underline;
+    @apply std-focus;
+  }
+
+  a:hover {
+    color: var(--color-c-red);
+    @apply std-focus;
+  }
+
+  img {
+    @apply no-drag;
+  }
+
+  h1 {
+    @apply text-xl font-bold;
+  }
+  h2 {
+    @apply text-lg font-bold;
+  }
+  h3 {
+    @apply text-base font-bold;
+  }
+
+  input,
+  select,
+  textarea,
+  button {
+    @apply input-like;
+  }
+
+  button {
+    @apply hover:cursor-pointer;
+  }
+}
+
+@utility std-focus {
+  @apply focus-visible:outline-solid
+        focus-visible:outline-2
+        focus-visible:outline-white
+        focus-visible:outline-offset-2;
+}
+
+@utility input-like {
+  @apply text-c-text
+        bg-c-surface0
+
+        rounded-sm
+        px-0.5
+        py-1
+        border
+        border-c-surface2
+        hover:border-c-accent1
+        focus:border-c-accent2
+        focus:outline-none
+        focus-within:border-c-accent2
+        focus-within:outline-none
+
+        disabled:bg-c-surface1
+        disabled:text-c-subtext0
+        disabled:border-c-overlay0
+        disabled:cursor-not-allowed
+
+        aria-disabled:bg-c-surface1
+        aria-disabled:text-c-subtext0
+        aria-disabled:border-c-overlay0
+        aria-disabled:cursor-not-allowed;
+}
+
+@utility table-bordered {
+  @apply border border-collapse border-solid;
+  border-color: var(--color-c-surface2);
+}
+
+.table-bordered th,
+.table-bordered td {
+  border: 1px solid var(--color-c-surface2);
+}
+
+.table-padded th,
+.table-padded td {
+  @apply p-1;
+}
+
+@utility container-theme {
+  background: var(--color-c-mantle);
+  border: 1px solid var(--color-c-surface2);
+  @apply p-2 rounded;
+}
+
+@utility text-faded {
+  @apply opacity-60;
+}
+
+@utility no-drag {
+  pointer-events: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  user-drag: none;
+  -webkit-touch-callout: none;
+}
+
+@utility wsnw {
+  @apply whitespace-nowrap;
+}
+
+@utility delete-btn {
+  @apply px-2 bg-c-red font-bold;
+}
+
+@utility cancel-btn {
+  @apply px-2 text-c-red font-bold;
+}
+
+@utility save-btn {
+  @apply px-2 bg-c-green font-bold;
+}
+
+@utility ok-btn {
+  @apply px-2 text-c-green font-bold;
+}
+
+.no-summary-arrow summary {
+  list-style: none;
+}
+
+.no-summary-arrow summary::marker,
+.no-summary-arrow summary::-webkit-details-marker {
+  display: none;
+}

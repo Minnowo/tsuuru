@@ -259,7 +259,7 @@ export const RestClientPage = () => {
 
       {error && <div className="text-c-red">{error}</div>}
 
-      <div className="flex gap-4 items-center">
+      <div className="flex flex-wrap gap-4 items-center">
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
@@ -286,6 +286,7 @@ export const RestClientPage = () => {
         </label>
 
         <select
+          className="min-w-0 max-w-full flex-1 truncate"
           onChange={(e) => {
             const n = Number((e.target as HTMLSelectElement).value);
             if (isNaN(n)) {

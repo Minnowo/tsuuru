@@ -10,6 +10,8 @@ import { Base64Page } from "./pages/base64";
 import { StringDecodePage } from "./pages/string_decoder";
 import { JsonFormatterPage } from "./pages/json_format";
 import { RestClientPage } from "./pages/rest_client";
+import { UrlEncoderPage } from "./pages/url_encoder";
+import { TimestampPage } from "./pages/timestamp";
 
 export const App = () => {
   const [hashRoute, setHashRoute] = useState<string>(window.location.hash);
@@ -35,6 +37,22 @@ export const App = () => {
   );
 
   switch (hashRoute) {
+    case "#url":
+      return (
+        <>
+          {nav}
+          <hr className="my-2" />
+          <UrlEncoderPage />
+        </>
+      );
+    case "#timestamp":
+      return (
+        <>
+          {nav}
+          <hr className="my-2" />
+          <TimestampPage />
+        </>
+      );
     case "#rest":
       return (
         <>

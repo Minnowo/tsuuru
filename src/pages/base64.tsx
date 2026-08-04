@@ -17,7 +17,7 @@ export const Base64Page = () => {
     load("decode-each-line") === "true",
   );
   const [useWordWrap, _setUseWordWrap] = useState(
-    load("decode-word-wrap") !== "false",
+    load("decode-word-wrap") === "true",
   );
   const [urlSafe, _setUrlSafe] = useState(load("decode-url-safe") === "true");
 

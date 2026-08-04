@@ -83,6 +83,9 @@ export const RestClientPage = () => {
   const [status, _setStatus] = useState<string>(load("response-status") ?? "");
   const [time, _setTime] = useState<string>(load("response-time") ?? "");
   const [error, _setError] = useState<string>(load("response-error") ?? "");
+  const [wordWrap, _setWordWrap] = useState<boolean>(
+    load("word-wrap") === "true",
+  );
 
   const setMethod = (value: Method) => {
     save("method", value);
@@ -137,6 +140,11 @@ export const RestClientPage = () => {
   const setError = (value: string) => {
     save("response-error", value);
     _setError(value);
+  };
+
+  const setWordWrap = (value: boolean) => {
+    save("word-wrap", String(value));
+    _setWordWrap(value);
   };
 
   const sendRequest = async () => {
@@ -210,7 +218,7 @@ export const RestClientPage = () => {
   };
 
   return (
-    <section className="flex flex-col gap-2 p-2">
+    <section className="flex flex-col gap-2 p-2 pb-64">
       <div className="flex flex-row justify-between">
         <h1 className="font-bold">REST Client</h1>
 
@@ -285,6 +293,17 @@ export const RestClientPage = () => {
           JSON Headers
         </label>
 
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={wordWrap}
+            onChange={(e) =>
+              setWordWrap((e.target as HTMLInputElement).checked)
+            }
+          />
+          Word wrap
+        </label>
+
         <select
           className="min-w-0 max-w-full flex-1 truncate"
           onChange={(e) => {
@@ -309,7 +328,8 @@ export const RestClientPage = () => {
       <h2 className="font-bold">Headers</h2>
 
       <textarea
-        className="font-mono h-32"
+        className={`font-mono h-32 ${wordWrap ? "" : "whitespace-pre overflow-x-auto"}`}
+        wrap={wordWrap ? "soft" : "off"}
         spellcheck={false}
         value={headers}
         onInput={(e) => {
@@ -337,7 +357,8 @@ export const RestClientPage = () => {
       </select>
 
       <textarea
-        className="font-mono h-48"
+        className={`font-mono h-48 ${wordWrap ? "" : "whitespace-pre overflow-x-auto"}`}
+        wrap={wordWrap ? "soft" : "off"}
         value={body}
         spellcheck={false}
         placeholder="Request body..."
@@ -360,7 +381,8 @@ export const RestClientPage = () => {
       <h2 className="font-bold">Response Headers</h2>
 
       <textarea
-        className="font-mono h-32"
+        className={`font-mono h-32 ${wordWrap ? "" : "whitespace-pre overflow-x-auto"}`}
+        wrap={wordWrap ? "soft" : "off"}
         spellcheck={false}
         value={responseHeaders}
       />
@@ -377,7 +399,8 @@ export const RestClientPage = () => {
       </div>
 
       <textarea
-        className="font-mono h-64"
+        className={`font-mono h-64 ${wordWrap ? "" : "whitespace-pre overflow-x-auto"}`}
+        wrap={wordWrap ? "soft" : "off"}
         spellcheck={false}
         value={response}
       />

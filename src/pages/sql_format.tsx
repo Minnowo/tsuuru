@@ -80,6 +80,13 @@ export const SqlFormatPage = () => {
   const [wordWrap, _setWordWrap] = useState<boolean>(
     load("word-wrap") === "false" ? false : true,
   );
+  const [spaceBetweenJoins, _setSpaceBetweenJoins] = useState<boolean>(
+    load("space-between-joins") === "true"
+      ? true
+      : load("space-between-joins") === "false"
+        ? false
+        : DEFAULT_OPTIONS.spaceBetweenJoins,
+  );
 
   const updateInput = (value: string) => {
     save("input", value);
@@ -146,6 +153,11 @@ export const SqlFormatPage = () => {
     _setWordWrap(value);
   };
 
+  const setSpaceBetweenJoins = (value: boolean) => {
+    save("space-between-joins", String(value));
+    _setSpaceBetweenJoins(value);
+  };
+
   const options: Partial<FormatterOptions> = {
     keywordCase,
     indentSize,
@@ -157,6 +169,7 @@ export const SqlFormatPage = () => {
     alwaysBreakOn,
     expandSelectColumns,
     selectColumnsMaxWidth,
+    spaceBetweenJoins,
   };
 
   const runFormat = () => {
@@ -283,6 +296,17 @@ export const SqlFormatPage = () => {
             }
           />
           Always put ON on its own line
+        </label>
+
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={spaceBetweenJoins}
+            onChange={(e) =>
+              setSpaceBetweenJoins((e.target as HTMLInputElement).checked)
+            }
+          />
+          Space between JOINs
         </label>
 
         <label className="flex items-center gap-2">

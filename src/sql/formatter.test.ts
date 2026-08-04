@@ -209,6 +209,60 @@ describe("alwaysBreakOn", () => {
   });
 });
 
+describe("spaceBetweenJoins", () => {
+  it("does not add blank lines by default", () => {
+    assert.equal(
+      format("SELECT * FROM a JOIN b ON a.id = b.id JOIN c ON a.id = c.id"),
+      ["SELECT *", "FROM a", "JOIN b ON a.id = b.id", "JOIN c ON a.id = c.id"].join(
+        "\n",
+      ),
+    );
+  });
+
+  it("puts a blank line before every JOIN, including the first, when enabled", () => {
+    assert.equal(
+      format("SELECT * FROM a JOIN b ON a.id = b.id JOIN c ON a.id = c.id", {
+        spaceBetweenJoins: true,
+      }),
+      [
+        "SELECT *",
+        "FROM a",
+        "",
+        "JOIN b ON a.id = b.id",
+        "",
+        "JOIN c ON a.id = c.id",
+      ].join("\n"),
+    );
+  });
+
+  it("adds one blank line per join phrase, not per JOIN modifier word", () => {
+    assert.equal(
+      format("SELECT * FROM a LEFT OUTER JOIN b ON a.id = b.id", {
+        spaceBetweenJoins: true,
+      }),
+      ["SELECT *", "FROM a", "", "LEFT OUTER JOIN b ON a.id = b.id"].join("\n"),
+    );
+  });
+
+  it("still separates joins nested in a grouped join chain", () => {
+    const sql = "SELECT * FROM t1 JOIN t2 JOIN t3 ON t2.id = t3.id ON t1.id = t2.id";
+
+    assert.equal(
+      format(sql, { spaceBetweenJoins: true }),
+      [
+        "SELECT *",
+        "FROM t1",
+        "",
+        "JOIN t2",
+        "",
+        "  JOIN t3",
+        "  ON t2.id = t3.id",
+        "ON t1.id = t2.id",
+      ].join("\n"),
+    );
+  });
+});
+
 describe("expandSelectColumns", () => {
   it("keeps a simple SELECT...FROM on one line by default, even with multiple columns", () => {
     assert.equal(format("SELECT a, b, c FROM t"), "SELECT a, b, c FROM t");

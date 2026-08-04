@@ -44,6 +44,10 @@ export type FormatterOptions = {
   // expandSelectColumns - but decided per-statement, not globally. 0 disables
   // this (the default).
   selectColumnsMaxWidth: number;
+
+  // Put a blank line before every JOIN (including the first one, right
+  // after FROM), to visually separate a chain of joins.
+  spaceBetweenJoins: boolean;
 };
 
 export const DEFAULT_OPTIONS: FormatterOptions = {
@@ -58,6 +62,7 @@ export const DEFAULT_OPTIONS: FormatterOptions = {
   alwaysBreakOn: false,
   expandSelectColumns: false,
   selectColumnsMaxWidth: 0,
+  spaceBetweenJoins: false,
 };
 
 // --- tree building --------------------------------------------------------
@@ -243,6 +248,19 @@ class Printer {
     } else {
       this.current = this.indentStr(level);
     }
+  }
+
+  // Leaves a single blank line before whatever gets written next, unless
+  // we're at the very start of the output or already just after one.
+  blankLine() {
+    if (this.current.trim() !== "") {
+      this.lines.push(this.current.replace(/[ \t]+$/, ""));
+      this.current = "";
+    }
+    if (this.lines.length > 0 && this.lines[this.lines.length - 1] !== "") {
+      this.lines.push("");
+    }
+    this.suppressSpace = true;
   }
 
   write(text: string, opts: { spaceBefore?: boolean } = {}) {
@@ -921,6 +939,9 @@ const printChildren = (p: Printer, nodes: Node[], indentLevel: number, opts: For
           const depth = event.stacked ? event.depth : 0;
           lineIndent = indentLevel + depth;
           clauseBaseIndent = lineIndent;
+          if (opts.spaceBetweenJoins) {
+            p.blankLine();
+          }
           p.ensureBreak(lineIndent);
           pendingJoins++;
           inJoinPhrase = true;

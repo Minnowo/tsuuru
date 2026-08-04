@@ -77,6 +77,9 @@ export const SqlFormatPage = () => {
           DEFAULT_OPTIONS.selectColumnsMaxWidth,
       ),
     );
+  const [wordWrap, _setWordWrap] = useState<boolean>(
+    load("word-wrap") === "false" ? false : true,
+  );
 
   const updateInput = (value: string) => {
     save("input", value);
@@ -136,6 +139,11 @@ export const SqlFormatPage = () => {
   const setSelectColumnsMaxWidth = (value: number) => {
     save("select-columns-max-width", String(value));
     _setSelectColumnsMaxWidth(value);
+  };
+
+  const setWordWrap = (value: boolean) => {
+    save("word-wrap", String(value));
+    _setWordWrap(value);
   };
 
   const options: Partial<FormatterOptions> = {
@@ -304,6 +312,17 @@ export const SqlFormatPage = () => {
           />
         </label>
 
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={wordWrap}
+            onChange={(e) =>
+              setWordWrap((e.target as HTMLInputElement).checked)
+            }
+          />
+          Word wrap
+        </label>
+
         <button
           className="px-4"
           onClick={() => {
@@ -320,7 +339,8 @@ export const SqlFormatPage = () => {
 
       <textarea
         spellcheck={false}
-        className="font-mono border rounded p-2 h-64"
+        wrap={wordWrap ? "soft" : "off"}
+        className={`font-mono border rounded p-2 h-64 ${wordWrap ? "" : "whitespace-pre overflow-x-auto"}`}
         placeholder="Paste SQL..."
         value={input}
         onInput={(e) => updateInput((e.target as HTMLTextAreaElement).value)}
@@ -332,7 +352,8 @@ export const SqlFormatPage = () => {
 
       <textarea
         spellcheck={false}
-        className="font-mono border rounded p-2 h-64"
+        wrap={wordWrap ? "soft" : "off"}
+        className={`font-mono border rounded p-2 h-64 ${wordWrap ? "" : "whitespace-pre overflow-x-auto"}`}
         placeholder="Formatted SQL..."
         value={output}
         readOnly

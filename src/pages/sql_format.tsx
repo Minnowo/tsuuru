@@ -27,28 +27,9 @@ export const SqlFormatPage = () => {
   const [maxInlineWidth, _setMaxInlineWidth] = useState<number>(
     Number(load("max-inline-width") ?? DEFAULT_OPTIONS.maxInlineWidth),
   );
-  const [collapseCaseStatements, _setCollapseCaseStatements] =
-    useState<boolean>(
-      load("collapse-case") === "true"
-        ? true
-        : load("collapse-case") === "false"
-          ? false
-          : DEFAULT_OPTIONS.collapseCaseStatements,
-    );
-  const [removeComments, _setRemoveComments] = useState<boolean>(
-    load("remove-comments") === "true"
-      ? true
-      : load("remove-comments") === "false"
-        ? false
-        : DEFAULT_OPTIONS.removeComments,
-  );
-  const [trailingSemicolon, _setTrailingSemicolon] = useState<boolean>(
-    load("trailing-semicolon") === "true"
-      ? true
-      : load("trailing-semicolon") === "false"
-        ? false
-        : DEFAULT_OPTIONS.trailingSemicolon,
-  );
+  const [collapseCaseStatements, _setCollapseCaseStatements] = useState<boolean>( load("collapse-case") !== "false");
+  const [removeComments, _setRemoveComments] = useState<boolean>( load("remove-comments") === "true");
+  const [trailingSemicolon, _setTrailingSemicolon] = useState<boolean>( load("trailing-semicolon") === "true");
   const [linesBetweenStatements, _setLinesBetweenStatements] =
     useState<number>(
       Number(
@@ -56,37 +37,13 @@ export const SqlFormatPage = () => {
           DEFAULT_OPTIONS.linesBetweenStatements,
       ),
     );
-  const [alwaysBreakOn, _setAlwaysBreakOn] = useState<boolean>(
-    load("always-break-on") === "true"
-      ? true
-      : load("always-break-on") === "false"
-        ? false
-        : DEFAULT_OPTIONS.alwaysBreakOn,
-  );
-  const [expandSelectColumns, _setExpandSelectColumns] = useState<boolean>(
-    load("expand-select-columns") === "true"
-      ? true
-      : load("expand-select-columns") === "false"
-        ? false
-        : DEFAULT_OPTIONS.expandSelectColumns,
-  );
+  const [alwaysBreakOn, _setAlwaysBreakOn] = useState<boolean>( load("always-break-on") === "true");
+  const [expandSelectColumns, _setExpandSelectColumns] = useState<boolean>( load("expand-select-columns") === "true");
   const [selectColumnsMaxWidth, _setSelectColumnsMaxWidth] =
-    useState<number>(
-      Number(
-        load("select-columns-max-width") ??
-          DEFAULT_OPTIONS.selectColumnsMaxWidth,
-      ),
+    useState<number>( Number( load("select-columns-max-width") ?? DEFAULT_OPTIONS.selectColumnsMaxWidth),
     );
-  const [wordWrap, _setWordWrap] = useState<boolean>(
-    load("word-wrap") === "false" ? false : true,
-  );
-  const [spaceBetweenJoins, _setSpaceBetweenJoins] = useState<boolean>(
-    load("space-between-joins") === "true"
-      ? true
-      : load("space-between-joins") === "false"
-        ? false
-        : DEFAULT_OPTIONS.spaceBetweenJoins,
-  );
+  const [wordWrap, _setWordWrap] = useState<boolean>( load("word-wrap") === "false");
+  const [spaceBetweenJoins, _setSpaceBetweenJoins] = useState<boolean>( load("space-between-joins") !== "false");
 
   const updateInput = (value: string) => {
     save("input", value);

@@ -54,14 +54,14 @@ export const DEFAULT_OPTIONS: FormatterOptions = {
   keywordCase: "upper",
   indentSize: 2,
   indentChar: " ",
-  maxInlineWidth: 80,
+  maxInlineWidth: 120,
   collapseCaseStatements: false,
   removeComments: false,
   linesBetweenStatements: 1,
   trailingSemicolon: false,
   alwaysBreakOn: false,
   expandSelectColumns: false,
-  selectColumnsMaxWidth: 0,
+  selectColumnsMaxWidth: 50,
   spaceBetweenJoins: false,
 };
 

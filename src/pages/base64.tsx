@@ -1,15 +1,10 @@
 import { useEffect, useRef, useState } from "preact/hooks";
-import { useDebouncedCallback } from "../hooks/useDebouncedCallback";
-
-const save = (key: string, value: string) => {
-  sessionStorage.setItem(`base64-${key}`, value);
-};
-const load = (key: string): string | null => {
-  return sessionStorage.getItem(`base64-${key}`);
-};
+import { useDebouncedSessionStorage } from "../hooks/useDebouncedSessionStorage";
 
 export const Base64Page = () => {
   const outputRef = useRef<HTMLTextAreaElement>(null);
+
+  const { load, save, saveNow } = useDebouncedSessionStorage("base64-", 300);
 
   const [error, setError] = useState("");
   const [input, _setInput] = useState(load("input") ?? "");
@@ -22,16 +17,14 @@ export const Base64Page = () => {
   );
   const [urlSafe, _setUrlSafe] = useState(load("decode-url-safe") === "true");
 
-  const [debouncedSave, saveNow] = useDebouncedCallback(save, 300);
-
   const updateInput = (value: string) => {
-    debouncedSave("input", value);
+    save("input", value);
     _setInput(value);
   };
 
   const updateOutput = (value: string, debounce = false) => {
     if (debounce) {
-      debouncedSave("output", value);
+      save("output", value);
     } else {
       saveNow("output", value);
     }
@@ -39,17 +32,17 @@ export const Base64Page = () => {
   };
 
   const updateDecodeEachLine = (value: boolean) => {
-    save("decode-each-line", String(value));
+    saveNow("decode-each-line", String(value));
     _setDecodeEachLine(value);
   };
 
   const updateWordWrap = (value: boolean) => {
-    save("decode-word-wrap", String(value));
+    saveNow("decode-word-wrap", String(value));
     _setUseWordWrap(value);
   };
 
   const updateUrlSafe = (value: boolean) => {
-    save("decode-url-safe", String(value));
+    saveNow("decode-url-safe", String(value));
     _setUrlSafe(value);
   };
 

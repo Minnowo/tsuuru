@@ -1,30 +1,26 @@
 import { useState } from "preact/hooks";
 import { decoders, type DecoderResult } from "./decoders";
-import { useDebouncedCallback } from "../hooks/useDebouncedCallback";
-
-const save = (key: string, value: string) => {
-  sessionStorage.setItem(`string-decoder-${key}`, value);
-};
-const load = (key: string): string | null => {
-  return sessionStorage.getItem(`string-decoder-${key}`);
-};
+import { useDebouncedSessionStorage } from "../hooks/useDebouncedSessionStorage";
 
 export const StringDecodePage = () => {
+  const { load, save, saveNow } = useDebouncedSessionStorage(
+    "string-decoder-",
+    300,
+  );
+
   const [input, _setInput] = useState(load("input") ?? "");
 
   const [results, _setResults] = useState<DecoderResult[]>(
     JSON.parse(load("results") ?? "[]"),
   );
 
-  const [debouncedSave] = useDebouncedCallback(save, 300);
-
   const setInput = (value: string) => {
-    debouncedSave("input", value);
+    save("input", value);
     _setInput(value);
   };
 
   const setResults = (value: DecoderResult[]) => {
-    save("results", JSON.stringify(value));
+    saveNow("results", JSON.stringify(value));
     _setResults(value);
   };
 

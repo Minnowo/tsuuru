@@ -1,12 +1,5 @@
 import { useEffect, useRef, useState } from "preact/hooks";
-import { useDebouncedCallback } from "../hooks/useDebouncedCallback";
-
-const save = (key: string, value: string) => {
-  sessionStorage.setItem(`timestamp-${key}`, value);
-};
-const load = (key: string): string | null => {
-  return sessionStorage.getItem(`timestamp-${key}`);
-};
+import { useDebouncedSessionStorage } from "../hooks/useDebouncedSessionStorage";
 
 type Unit = "seconds" | "milliseconds";
 
@@ -23,22 +16,22 @@ const toDate = (input: string, unit: Unit): Date => {
 export const TimestampPage = () => {
   const outputRef = useRef<HTMLTextAreaElement>(null);
 
+  const { load, save, saveNow } = useDebouncedSessionStorage("timestamp-", 300);
+
   const [error, setError] = useState("");
   const [input, _setInput] = useState(load("input") ?? "");
   const [output, _setOutput] = useState(load("output") ?? "");
   const [unit, _setUnit] = useState<Unit>((load("unit") as Unit) ?? "seconds");
   const [useUtc, _setUseUtc] = useState(load("use-utc") === "true");
 
-  const [debouncedSave, saveNow] = useDebouncedCallback(save, 300);
-
   const updateInput = (value: string) => {
-    debouncedSave("input", value);
+    save("input", value);
     _setInput(value);
   };
 
   const updateOutput = (value: string, debounce = false) => {
     if (debounce) {
-      debouncedSave("output", value);
+      save("output", value);
     } else {
       saveNow("output", value);
     }
@@ -46,12 +39,12 @@ export const TimestampPage = () => {
   };
 
   const updateUnit = (value: Unit) => {
-    save("unit", value);
+    saveNow("unit", value);
     _setUnit(value);
   };
 
   const updateUseUtc = (value: boolean) => {
-    save("use-utc", String(value));
+    saveNow("use-utc", String(value));
     _setUseUtc(value);
   };
 

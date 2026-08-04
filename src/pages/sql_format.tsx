@@ -5,17 +5,12 @@ import {
   type FormatterOptions,
   type KeywordCase,
 } from "../sql/formatter";
-import { useDebouncedCallback } from "../hooks/useDebouncedCallback";
-
-const save = (key: string, value: string) => {
-  sessionStorage.setItem(`sql-${key}`, value);
-};
-const load = (key: string): string | null => {
-  return sessionStorage.getItem(`sql-${key}`);
-};
+import { useDebouncedSessionStorage } from "../hooks/useDebouncedSessionStorage";
 
 export const SqlFormatPage = () => {
   const outputRef = useRef<HTMLTextAreaElement>(null);
+
+  const { load, save, saveNow } = useDebouncedSessionStorage("sql-", 300);
 
   const [error, setError] = useState("");
   const [input, _setInput] = useState(load("input") ?? "");
@@ -65,16 +60,14 @@ export const SqlFormatPage = () => {
     load("space-between-joins") !== "false",
   );
 
-  const [debouncedSave, saveNow] = useDebouncedCallback(save, 300);
-
   const updateInput = (value: string) => {
-    debouncedSave("input", value);
+    save("input", value);
     _setInput(value);
   };
 
   const updateOutput = (value: string, debounce = false) => {
     if (debounce) {
-      debouncedSave("output", value);
+      save("output", value);
     } else {
       saveNow("output", value);
     }
@@ -82,67 +75,67 @@ export const SqlFormatPage = () => {
   };
 
   const setKeywordCase = (value: KeywordCase) => {
-    save("keyword-case", value);
+    saveNow("keyword-case", value);
     _setKeywordCase(value);
   };
 
   const setIndentSize = (value: number) => {
-    debouncedSave("indent-size", String(value));
+    save("indent-size", String(value));
     _setIndentSize(value);
   };
 
   const setMaxInlineWidth = (value: number) => {
-    debouncedSave("max-inline-width", String(value));
+    save("max-inline-width", String(value));
     _setMaxInlineWidth(value);
   };
 
   const setCollapseCaseStatements = (value: boolean) => {
-    save("collapse-case", String(value));
+    saveNow("collapse-case", String(value));
     _setCollapseCaseStatements(value);
   };
 
   const setRemoveLineComments = (value: boolean) => {
-    save("remove-line-comments", String(value));
+    saveNow("remove-line-comments", String(value));
     _setRemoveLineComments(value);
   };
 
   const setRemoveBlockComments = (value: boolean) => {
-    save("remove-block-comments", String(value));
+    saveNow("remove-block-comments", String(value));
     _setRemoveBlockComments(value);
   };
 
   const setTrailingSemicolon = (value: boolean) => {
-    save("trailing-semicolon", String(value));
+    saveNow("trailing-semicolon", String(value));
     _setTrailingSemicolon(value);
   };
 
   const setLinesBetweenStatements = (value: number) => {
-    debouncedSave("lines-between-statements", String(value));
+    save("lines-between-statements", String(value));
     _setLinesBetweenStatements(value);
   };
 
   const setAlwaysBreakOn = (value: boolean) => {
-    save("always-break-on", String(value));
+    saveNow("always-break-on", String(value));
     _setAlwaysBreakOn(value);
   };
 
   const setExpandSelectColumns = (value: boolean) => {
-    save("expand-select-columns", String(value));
+    saveNow("expand-select-columns", String(value));
     _setExpandSelectColumns(value);
   };
 
   const setSelectColumnsMaxWidth = (value: number) => {
-    debouncedSave("select-columns-max-width", String(value));
+    save("select-columns-max-width", String(value));
     _setSelectColumnsMaxWidth(value);
   };
 
   const setWordWrap = (value: boolean) => {
-    save("word-wrap", String(value));
+    saveNow("word-wrap", String(value));
     _setWordWrap(value);
   };
 
   const setSpaceBetweenJoins = (value: boolean) => {
-    save("space-between-joins", String(value));
+    saveNow("space-between-joins", String(value));
     _setSpaceBetweenJoins(value);
   };
 

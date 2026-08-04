@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import { format as lenientFormat } from "../json/formatter";
-import { useDebouncedCallback } from "../hooks/useDebouncedCallback";
+import { useDebouncedSessionStorage } from "../hooks/useDebouncedSessionStorage";
 
 const normalizePythonDict = (value: string) => {
   return (
@@ -18,15 +18,10 @@ const normalizePythonDict = (value: string) => {
   );
 };
 
-const save = (key: string, value: string) => {
-  sessionStorage.setItem(`json-${key}`, value);
-};
-const load = (key: string): string | null => {
-  return sessionStorage.getItem(`json-${key}`);
-};
-
 export const JsonFormatterPage = () => {
   const outputRef = useRef<HTMLTextAreaElement>(null);
+
+  const { load, save, saveNow } = useDebouncedSessionStorage("json-", 300);
 
   const [input, _setInput] = useState(load("input") ?? "");
 
@@ -38,16 +33,14 @@ export const JsonFormatterPage = () => {
 
   const [sortKeys, _setSortKeys] = useState(load("sort-keys") === "true");
 
-  const [debouncedSave, saveNow] = useDebouncedCallback(save, 300);
-
   const updateInput = (value: string) => {
-    debouncedSave("input", value);
+    save("input", value);
     _setInput(value);
   };
 
   const updateOutput = (value: string, debounce = false) => {
     if (debounce) {
-      debouncedSave("output", value);
+      save("output", value);
     } else {
       saveNow("output", value);
     }
@@ -55,12 +48,12 @@ export const JsonFormatterPage = () => {
   };
 
   const updateIndent = (value: number) => {
-    save("indent", String(value));
+    saveNow("indent", String(value));
     _setIndent(value);
   };
 
   const updateSortKeys = (value: boolean) => {
-    save("sort-keys", String(value));
+    saveNow("sort-keys", String(value));
     _setSortKeys(value);
   };
 

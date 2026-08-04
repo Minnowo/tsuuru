@@ -1,15 +1,10 @@
 import { useEffect, useRef, useState } from "preact/hooks";
-import { useDebouncedCallback } from "../hooks/useDebouncedCallback";
-
-const save = (key: string, value: string) => {
-  sessionStorage.setItem(`url-${key}`, value);
-};
-const load = (key: string): string | null => {
-  return sessionStorage.getItem(`url-${key}`);
-};
+import { useDebouncedSessionStorage } from "../hooks/useDebouncedSessionStorage";
 
 export const UrlEncoderPage = () => {
   const outputRef = useRef<HTMLTextAreaElement>(null);
+
+  const { load, save, saveNow } = useDebouncedSessionStorage("url-", 300);
 
   const [error, setError] = useState("");
   const [input, _setInput] = useState(load("input") ?? "");
@@ -18,16 +13,14 @@ export const UrlEncoderPage = () => {
     load("encode-component") !== "false",
   );
 
-  const [debouncedSave, saveNow] = useDebouncedCallback(save, 300);
-
   const updateInput = (value: string) => {
-    debouncedSave("input", value);
+    save("input", value);
     _setInput(value);
   };
 
   const updateOutput = (value: string, debounce = false) => {
     if (debounce) {
-      debouncedSave("output", value);
+      save("output", value);
     } else {
       saveNow("output", value);
     }
@@ -35,7 +28,7 @@ export const UrlEncoderPage = () => {
   };
 
   const updateEncodeComponent = (value: boolean) => {
-    save("encode-component", String(value));
+    saveNow("encode-component", String(value));
     _setEncodeComponent(value);
   };
 

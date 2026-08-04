@@ -1,5 +1,5 @@
 import { useState } from "preact/hooks";
-import { useDebouncedCallback } from "../hooks/useDebouncedCallback";
+import { useDebouncedSessionStorage } from "../hooks/useDebouncedSessionStorage";
 
 type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -25,13 +25,6 @@ const commonHeaders = [
   ["Accept", "multipart/form-data"],
   ["Accept", "application/octet-stream"],
 ];
-
-const save = (key: string, value: string) => {
-  sessionStorage.setItem(`rest-${key}`, value);
-};
-const load = (key: string): string | null => {
-  return sessionStorage.getItem(`rest-${key}`);
-};
 
 const parseHeaders = (headers: string, headersJsonMode: boolean) => {
   if (!headers.trim()) {
@@ -63,6 +56,8 @@ const parseHeaders = (headers: string, headersJsonMode: boolean) => {
 };
 
 export const RestClientPage = () => {
+  const { load, save, saveNow } = useDebouncedSessionStorage("rest-", 300);
+
   const [method, _setMethod] = useState<Method>(
     (load("method") as Method) ?? "GET",
   );
@@ -88,41 +83,39 @@ export const RestClientPage = () => {
     load("word-wrap") === "true",
   );
 
-  const [debouncedSave, saveNow] = useDebouncedCallback(save, 300);
-
   const setMethod = (value: Method) => {
-    save("method", value);
+    saveNow("method", value);
     _setMethod(value);
   };
 
   const setUrl = (value: string) => {
-    debouncedSave("url", value);
+    save("url", value);
     _setUrl(value);
   };
 
   const setHeaders = (value: string) => {
-    debouncedSave("headers", value);
+    save("headers", value);
     _setHeaders(value);
   };
 
   const setHeadersJsonMode = (value: boolean) => {
-    save("header-json-mode", String(value));
+    saveNow("header-json-mode", String(value));
     _setHeadersJsonMode(value);
   };
 
   const setBodyType = (value: string) => {
-    save("body-type", value);
+    saveNow("body-type", value);
     _setBodyType(value);
   };
 
   const setBody = (value: string) => {
-    debouncedSave("body", value);
+    save("body", value);
     _setBody(value);
   };
 
   const setResponse = (value: string, debounce = false) => {
     if (debounce) {
-      debouncedSave("response", value);
+      save("response", value);
     } else {
       saveNow("response", value);
     }
@@ -131,7 +124,7 @@ export const RestClientPage = () => {
 
   const setResponseHeaders = (value: string, debounce = false) => {
     if (debounce) {
-      debouncedSave("response-headers", value);
+      save("response-headers", value);
     } else {
       saveNow("response-headers", value);
     }
@@ -139,22 +132,22 @@ export const RestClientPage = () => {
   };
 
   const setStatus = (value: string) => {
-    save("response-status", value);
+    saveNow("response-status", value);
     _setStatus(value);
   };
 
   const setTime = (value: string) => {
-    save("response-time", value);
+    saveNow("response-time", value);
     _setTime(value);
   };
 
   const setError = (value: string) => {
-    save("response-error", value);
+    saveNow("response-error", value);
     _setError(value);
   };
 
   const setWordWrap = (value: boolean) => {
-    save("word-wrap", String(value));
+    saveNow("word-wrap", String(value));
     _setWordWrap(value);
   };
 

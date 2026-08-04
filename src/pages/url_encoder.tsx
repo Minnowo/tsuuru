@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "preact/hooks";
+import { useDebouncedCallback } from "../hooks/useDebouncedCallback";
 
 const save = (key: string, value: string) => {
   sessionStorage.setItem(`url-${key}`, value);
@@ -17,13 +18,19 @@ export const UrlEncoderPage = () => {
     load("encode-component") !== "false",
   );
 
+  const [debouncedSave, saveNow] = useDebouncedCallback(save, 300);
+
   const updateInput = (value: string) => {
-    save("input", value);
+    debouncedSave("input", value);
     _setInput(value);
   };
 
-  const updateOutput = (value: string) => {
-    save("output", value);
+  const updateOutput = (value: string, debounce = false) => {
+    if (debounce) {
+      debouncedSave("output", value);
+    } else {
+      saveNow("output", value);
+    }
     _setOutput(value);
   };
 
@@ -129,7 +136,9 @@ export const UrlEncoderPage = () => {
         className="font-mono border rounded p-2 min-h-48 resize-none overflow-hidden"
         placeholder="Result..."
         value={output}
-        onInput={(e) => resizeOutput(e.target as HTMLTextAreaElement)}
+        onInput={(e) =>
+          updateOutput((e.target as HTMLTextAreaElement).value, true)
+        }
       />
     </section>
   );

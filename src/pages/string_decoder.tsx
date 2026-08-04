@@ -1,5 +1,6 @@
 import { useState } from "preact/hooks";
 import { decoders, type DecoderResult } from "./decoders";
+import { useDebouncedCallback } from "../hooks/useDebouncedCallback";
 
 const save = (key: string, value: string) => {
   sessionStorage.setItem(`string-decoder-${key}`, value);
@@ -15,8 +16,10 @@ export const StringDecodePage = () => {
     JSON.parse(load("results") ?? "[]"),
   );
 
+  const [debouncedSave] = useDebouncedCallback(save, 300);
+
   const setInput = (value: string) => {
-    save("input", value);
+    debouncedSave("input", value);
     _setInput(value);
   };
 

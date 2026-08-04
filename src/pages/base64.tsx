@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "preact/hooks";
+import { useDebouncedCallback } from "../hooks/useDebouncedCallback";
 
 const save = (key: string, value: string) => {
   sessionStorage.setItem(`base64-${key}`, value);
@@ -21,13 +22,19 @@ export const Base64Page = () => {
   );
   const [urlSafe, _setUrlSafe] = useState(load("decode-url-safe") === "true");
 
+  const [debouncedSave, saveNow] = useDebouncedCallback(save, 300);
+
   const updateInput = (value: string) => {
-    save("input", value);
+    debouncedSave("input", value);
     _setInput(value);
   };
 
-  const updateOutput = (value: string) => {
-    save("output", value);
+  const updateOutput = (value: string, debounce = false) => {
+    if (debounce) {
+      debouncedSave("output", value);
+    } else {
+      saveNow("output", value);
+    }
     _setOutput(value);
   };
 
@@ -194,7 +201,9 @@ export const Base64Page = () => {
         placeholder="Result..."
         wrap={useWordWrap ? "soft" : "off"}
         value={output}
-        onInput={(e) => resizeOutput(e.target as HTMLTextAreaElement)}
+        onInput={(e) =>
+          updateOutput((e.target as HTMLTextAreaElement).value, true)
+        }
       />
     </section>
   );

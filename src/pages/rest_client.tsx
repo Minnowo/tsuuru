@@ -1,4 +1,5 @@
 import { useState } from "preact/hooks";
+import { useDebouncedCallback } from "../hooks/useDebouncedCallback";
 
 type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -87,18 +88,20 @@ export const RestClientPage = () => {
     load("word-wrap") === "true",
   );
 
+  const [debouncedSave, saveNow] = useDebouncedCallback(save, 300);
+
   const setMethod = (value: Method) => {
     save("method", value);
     _setMethod(value);
   };
 
   const setUrl = (value: string) => {
-    save("url", value);
+    debouncedSave("url", value);
     _setUrl(value);
   };
 
   const setHeaders = (value: string) => {
-    save("headers", value);
+    debouncedSave("headers", value);
     _setHeaders(value);
   };
 
@@ -113,17 +116,25 @@ export const RestClientPage = () => {
   };
 
   const setBody = (value: string) => {
-    save("body", value);
+    debouncedSave("body", value);
     _setBody(value);
   };
 
-  const setResponse = (value: string) => {
-    save("response", value);
+  const setResponse = (value: string, debounce = false) => {
+    if (debounce) {
+      debouncedSave("response", value);
+    } else {
+      saveNow("response", value);
+    }
     _setResponse(value);
   };
 
-  const setResponseHeaders = (value: string) => {
-    save("response-headers", value);
+  const setResponseHeaders = (value: string, debounce = false) => {
+    if (debounce) {
+      debouncedSave("response-headers", value);
+    } else {
+      saveNow("response-headers", value);
+    }
     _setResponseHeaders(value);
   };
 
@@ -385,6 +396,9 @@ export const RestClientPage = () => {
         wrap={wordWrap ? "soft" : "off"}
         spellcheck={false}
         value={responseHeaders}
+        onInput={(e) =>
+          setResponseHeaders((e.target as HTMLTextAreaElement).value, true)
+        }
       />
 
       <div className="flex justify-between items-center">
@@ -403,6 +417,9 @@ export const RestClientPage = () => {
         wrap={wordWrap ? "soft" : "off"}
         spellcheck={false}
         value={response}
+        onInput={(e) =>
+          setResponse((e.target as HTMLTextAreaElement).value, true)
+        }
       />
     </section>
   );

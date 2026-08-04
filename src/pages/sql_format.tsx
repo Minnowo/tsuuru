@@ -5,6 +5,7 @@ import {
   type FormatterOptions,
   type KeywordCase,
 } from "../sql/formatter";
+import { useDebouncedCallback } from "../hooks/useDebouncedCallback";
 
 const save = (key: string, value: string) => {
   sessionStorage.setItem(`sql-${key}`, value);
@@ -64,13 +65,19 @@ export const SqlFormatPage = () => {
     load("space-between-joins") !== "false",
   );
 
+  const [debouncedSave, saveNow] = useDebouncedCallback(save, 300);
+
   const updateInput = (value: string) => {
-    save("input", value);
+    debouncedSave("input", value);
     _setInput(value);
   };
 
-  const updateOutput = (value: string) => {
-    save("output", value);
+  const updateOutput = (value: string, debounce = false) => {
+    if (debounce) {
+      debouncedSave("output", value);
+    } else {
+      saveNow("output", value);
+    }
     _setOutput(value);
   };
 
@@ -80,12 +87,12 @@ export const SqlFormatPage = () => {
   };
 
   const setIndentSize = (value: number) => {
-    save("indent-size", String(value));
+    debouncedSave("indent-size", String(value));
     _setIndentSize(value);
   };
 
   const setMaxInlineWidth = (value: number) => {
-    save("max-inline-width", String(value));
+    debouncedSave("max-inline-width", String(value));
     _setMaxInlineWidth(value);
   };
 
@@ -110,7 +117,7 @@ export const SqlFormatPage = () => {
   };
 
   const setLinesBetweenStatements = (value: number) => {
-    save("lines-between-statements", String(value));
+    debouncedSave("lines-between-statements", String(value));
     _setLinesBetweenStatements(value);
   };
 
@@ -125,7 +132,7 @@ export const SqlFormatPage = () => {
   };
 
   const setSelectColumnsMaxWidth = (value: number) => {
-    save("select-columns-max-width", String(value));
+    debouncedSave("select-columns-max-width", String(value));
     _setSelectColumnsMaxWidth(value);
   };
 
@@ -392,7 +399,9 @@ export const SqlFormatPage = () => {
         className={`font-mono border rounded p-2 min-h-64 resize-none overflow-y-hidden ${wordWrap ? "" : "whitespace-pre overflow-x-auto"}`}
         placeholder="Formatted SQL..."
         value={output}
-        onInput={(e) => resizeOutput(e.target as HTMLTextAreaElement)}
+        onInput={(e) =>
+          updateOutput((e.target as HTMLTextAreaElement).value, true)
+        }
       />
     </section>
   );

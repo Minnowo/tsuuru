@@ -158,7 +158,6 @@ export const TimestampPage = () => {
         className="font-mono border rounded p-2 h-24"
         placeholder="Result..."
         value={output}
-        readOnly
       />
 
       <button

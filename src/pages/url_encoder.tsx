@@ -107,7 +107,6 @@ export const UrlEncoderPage = () => {
         className="font-mono border rounded p-2 h-48"
         placeholder="Result..."
         value={output}
-        readOnly
       />
 
       <button

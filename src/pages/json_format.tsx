@@ -181,7 +181,6 @@ export const JsonFormatterPage = () => {
         className="font-mono border rounded p-2 h-64"
         placeholder="Formatted JSON..."
         value={output}
-        readOnly
       />
 
       <button

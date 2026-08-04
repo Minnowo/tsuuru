@@ -172,7 +172,6 @@ export const Base64Page = () => {
         placeholder="Result..."
         wrap={useWordWrap ? "soft" : "off"}
         value={output}
-        readOnly
       />
 
       <button

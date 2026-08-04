@@ -368,7 +368,6 @@ export const SqlFormatPage = () => {
         className={`font-mono border rounded p-2 h-64 ${wordWrap ? "" : "whitespace-pre overflow-x-auto"}`}
         placeholder="Formatted SQL..."
         value={output}
-        readOnly
       />
 
       <button

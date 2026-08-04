@@ -12,6 +12,7 @@ import { JsonFormatterPage } from "./pages/json_format";
 import { RestClientPage } from "./pages/rest_client";
 import { UrlEncoderPage } from "./pages/url_encoder";
 import { TimestampPage } from "./pages/timestamp";
+import { SqlFormatPage } from "./pages/sql_format";
 
 export const App = () => {
   const [hashRoute, setHashRoute] = useState<string>(window.location.hash);
@@ -33,10 +34,19 @@ export const App = () => {
       <a href="#rest">REST Client</a>
       <a href="#url">URL Encoder / Decoder</a>
       <a href="#timestamp">Timestamp to ISO</a>
+      <a href="#sql">SQL Formatter</a>
     </nav>
   );
 
   switch (hashRoute) {
+    case "#sql":
+      return (
+        <>
+          {nav}
+          <hr className="my-2" />
+          <SqlFormatPage />
+        </>
+      );
     case "#url":
       return (
         <>

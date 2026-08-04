@@ -1,4 +1,5 @@
 import { useState } from "preact/hooks";
+import { format as lenientFormat } from "../json/formatter";
 
 const normalizePythonDict = (value: string) => {
   return (
@@ -71,45 +72,53 @@ export const JsonFormatterPage = () => {
   };
 
   const format = () => {
-    try {
-      setError("");
+    setError("");
 
-      let json;
+    let json;
+    try {
       try {
         json = JSON.parse(input);
       } catch {
         json = JSON.parse(normalizePythonDict(input));
       }
-
-      if (sortKeys) {
-        json = sortObjectKeys(json);
-      }
-
-      updateOutput(JSON.stringify(json, null, indent));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Invalid JSON");
+    } catch {
+      setError(
+        "Invalid JSON - showing best-effort formatting (sort keys is ignored).",
+      );
+      updateOutput(lenientFormat(input, { indentSize: indent }));
+      return;
     }
+
+    if (sortKeys) {
+      json = sortObjectKeys(json);
+    }
+
+    updateOutput(JSON.stringify(json, null, indent));
   };
 
   const minify = () => {
-    try {
-      setError("");
+    setError("");
 
-      let json;
+    let json;
+    try {
       try {
         json = JSON.parse(input);
       } catch {
         json = JSON.parse(normalizePythonDict(input));
       }
-
-      if (sortKeys) {
-        json = sortObjectKeys(json);
-      }
-
-      updateOutput(JSON.stringify(json));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Invalid JSON");
+    } catch {
+      setError(
+        "Invalid JSON - showing best-effort formatting (sort keys is ignored).",
+      );
+      updateOutput(lenientFormat(input, { pretty: false }));
+      return;
     }
+
+    if (sortKeys) {
+      json = sortObjectKeys(json);
+    }
+
+    updateOutput(JSON.stringify(json));
   };
 
   return (

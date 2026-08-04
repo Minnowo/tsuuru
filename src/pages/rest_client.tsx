@@ -164,15 +164,18 @@ export const RestClientPage = () => {
 
       const start = performance.now();
 
+      const hasBody =
+        method !== "GET" && method !== "DELETE" && body.length > 0;
+
       const parsedHeaders = {
-        "Content-Type": bodyType,
+        ...(hasBody ? { "Content-Type": bodyType } : {}),
         ...parseHeaders(headers, headersJsonMode),
       };
 
       const result = await fetch(url, {
         method,
         headers: parsedHeaders,
-        body: method === "GET" || method === "DELETE" ? undefined : body,
+        body: hasBody ? body : undefined,
       });
 
       setTime(`${(performance.now() - start).toFixed(0)} ms`);

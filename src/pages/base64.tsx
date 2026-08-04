@@ -47,7 +47,9 @@ export const Base64Page = () => {
   };
 
   const resizeOutput = (el: HTMLTextAreaElement | null) => {
-    if (!el) return;
+    if (!el) {
+      return;
+    }
     const scrollY = window.scrollY;
     el.style.height = "auto";
     el.style.height = `${el.scrollHeight}px`;

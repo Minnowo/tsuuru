@@ -4,7 +4,9 @@ import { useCallback, useEffect, useRef } from "preact/hooks";
 // Each logical key (e.g. "input", "output") gets its own pending timeout, so
 // acting on one key never cancels or drops a pending write for another key.
 export const useDebouncedSessionStorage = (prefix: string, delay: number) => {
-  const pendingRef = useRef(new Map<string, { timeout: number; value: string }>());
+  const pendingRef = useRef(
+    new Map<string, { timeout: number; value: string }>(),
+  );
 
   const write = useCallback(
     (key: string, value: string) => {

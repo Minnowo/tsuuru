@@ -44,7 +44,7 @@ const normalizeString = (raw: string): string => {
       } else if (next === '"') {
         result += '\\"';
       } else if (next === "u") {
-        result += "\\u" + body.slice(i + 2, i + 6);
+        result += `\\u${body.slice(i + 2, i + 6)}`;
         i += 4;
       } else {
         result += next;
@@ -69,13 +69,17 @@ export const format = (input: string, options: FormatOptions = {}): string => {
   const pretty = options.pretty ?? true;
 
   const toks = tokenize(input).filter((t) => t.type !== "whitespace");
-  if (toks.length === 0) return "";
+  if (toks.length === 0) {
+    return "";
+  }
 
   let out = "";
   let indent = 0;
   const pad = () => (pretty ? " ".repeat(indent * indentSize) : "");
   const newline = () => {
-    if (pretty) out += "\n" + pad();
+    if (pretty) {
+      out += `\n${pad()}`;
+    }
   };
 
   for (let i = 0; i < toks.length; i++) {
@@ -83,10 +87,12 @@ export const format = (input: string, options: FormatOptions = {}): string => {
     const prev = toks[i - 1];
 
     if (t.type === "line_comment" || t.type === "block_comment") {
-      if (!pretty) continue; // comments have no place in compact output
-      if (out.length && !out.endsWith("\n" + pad())) {
+      if (!pretty) {
+        continue;
+      } // comments have no place in compact output
+      if (out.length && !out.endsWith(`\n${pad()}`)) {
         out = out.replace(/[ \t]*$/, "");
-        out += "\n" + pad();
+        out += `\n${pad()}`;
       }
       out += t.value;
       newline();
@@ -103,7 +109,9 @@ export const format = (input: string, options: FormatOptions = {}): string => {
 
     if (t.type === "punctuation" && t.value === ",") {
       const next = toks[i + 1];
-      if (next && (next.value === "}" || next.value === "]")) continue;
+      if (next && (next.value === "}" || next.value === "]")) {
+        continue;
+      }
       out += ",";
       newline();
       continue;

@@ -10,6 +10,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "format": "npx prettier . --write",
+    "lint": "eslint src --ext .ts,.tsx",
     "test": "node --experimental-loader ./scripts/ts-loader.mjs --test src/**/*.test.ts"
   },
   "dependencies": {

@@ -296,8 +296,12 @@ class Printer {
 }
 
 const renderKeyword = (value: string, opts: FormatterOptions): string => {
-  if (opts.keywordCase === "upper") return value.toUpperCase();
-  if (opts.keywordCase === "lower") return value.toLowerCase();
+  if (opts.keywordCase === "upper") {
+    return value.toUpperCase();
+  }
+  if (opts.keywordCase === "lower") {
+    return value.toLowerCase();
+  }
   return value;
 };
 
@@ -629,7 +633,9 @@ const collectCommaItems = (
 const commaListWidth = (items: Node[][], opts: FormatterOptions): number => {
   let width = 0;
   items.forEach((item, i) => {
-    if (i > 0) width += 2; // ", "
+    if (i > 0) {
+      width += 2;
+    } // ", "
     for (const node of item) {
       width +=
         (node.kind === "token" ? node.token.value.length : layout(node, opts)) +
@@ -662,14 +668,19 @@ const topLevelSelectColumnsWouldExpand = (
   const selectIdx = tree.findIndex(
     (n) => n.kind === "token" && isKeyword(n.token, "SELECT"),
   );
-  if (selectIdx === -1) return false;
+  if (selectIdx === -1) {
+    return false;
+  }
 
   let i = selectIdx + 1;
   if (i < tree.length) {
     const first = tree[i];
-    if (first.kind === "token" && first.token.type === "block_comment")
+    if (first.kind === "token" && first.token.type === "block_comment") {
       return false;
-    if (first.kind === "token" && isKeyword(first.token, "DISTINCT")) i++;
+    }
+    if (first.kind === "token" && isKeyword(first.token, "DISTINCT")) {
+      i++;
+    }
   }
 
   const { items } = collectCommaItems(tree, i, CLAUSE_START);
@@ -761,7 +772,9 @@ const planAndOrIndent = (nodes: Node[]): Map<number, "flush" | "bump"> => {
   const flushGroup = () => {
     const mode: "flush" | "bump" =
       chainLengthMatters && group.length < 2 ? "flush" : "bump";
-    for (const i of group) result.set(i, mode);
+    for (const i of group) {
+      result.set(i, mode);
+    }
     group = [];
   };
 
@@ -860,7 +873,9 @@ const isSimpleSelectFromBranch = (
       ) {
         return false;
       }
-      if (node.kind !== "token" && node.multiline) return false;
+      if (node.kind !== "token" && node.multiline) {
+        return false;
+      }
     }
   }
 
@@ -868,8 +883,9 @@ const isSimpleSelectFromBranch = (
   // columns must each get their own line - only a single column is short
   // enough to merge onto the FROM line too. Otherwise columns already stay
   // inline regardless of count.
-  if (columnItems.length > 1 && shouldExpandColumns(columnItems, opts))
+  if (columnItems.length > 1 && shouldExpandColumns(columnItems, opts)) {
     return false;
+  }
 
   i = afterColumns;
   if (
@@ -882,23 +898,32 @@ const isSimpleSelectFromBranch = (
     return false; // no FROM directly after the column list
   }
   i++; // consume FROM
-  if (i >= branchEnd) return false; // FROM with no target
+  if (i >= branchEnd) {
+    return false;
+  } // FROM with no target
 
   while (i < branchEnd) {
     const node = nodes[i];
     if (node.kind === "token") {
       const token = node.token;
-      if (isPunct(token, ",")) return false; // multi-table FROM
-      if (token.type === "keyword" && upper(token) !== "AS") return false;
-      if (token.type === "line_comment" || token.type === "block_comment")
+      if (isPunct(token, ",")) {
         return false;
+      } // multi-table FROM
+      if (token.type === "keyword" && upper(token) !== "AS") {
+        return false;
+      }
+      if (token.type === "line_comment" || token.type === "block_comment") {
+        return false;
+      }
     } else if (node.multiline) {
       return false;
     }
     i++;
   }
 
-  if (i !== branchEnd) return false;
+  if (i !== branchEnd) {
+    return false;
+  }
 
   let width = 0;
   for (let k = selectIdx; k < branchEnd; k++) {
@@ -1008,9 +1033,13 @@ const printChildren = (
               // Stays inline with SELECT, unless a hint comment already
               // forced a break onto a fresh indented line.
               const itemIndent = hasHint ? indentLevel + 1 : indentLevel;
-              if (hasHint) p.ensureBreak(itemIndent);
+              if (hasHint) {
+                p.ensureBreak(itemIndent);
+              }
               items.forEach((item, i) => {
-                if (i > 0) p.write(",", { spaceBefore: false });
+                if (i > 0) {
+                  p.write(",", { spaceBefore: false });
+                }
                 for (const itemNode of item) {
                   printNode(p, itemNode, itemIndent, opts);
                 }
@@ -1145,8 +1174,12 @@ const splitStatements = (tokens: Token[]): Token[][] => {
   let depth = 0;
 
   for (const token of tokens) {
-    if (isPunct(token, "(")) depth++;
-    if (isPunct(token, ")")) depth--;
+    if (isPunct(token, "(")) {
+      depth++;
+    }
+    if (isPunct(token, ")")) {
+      depth--;
+    }
 
     current.push(token);
 

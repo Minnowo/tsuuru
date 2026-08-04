@@ -45,7 +45,9 @@ export const tokenize = (src: string): Token[] => {
 
     // whitespace
     if (/\s/.test(ch)) {
-      while (i < n && /\s/.test(src[i])) i++;
+      while (i < n && /\s/.test(src[i])) {
+        i++;
+      }
       tokens.push({
         type: "whitespace",
         value: src.slice(start, i),
@@ -58,7 +60,9 @@ export const tokenize = (src: string): Token[] => {
     // line comment
     if (ch === "/" && src[i + 1] === "/") {
       i += 2;
-      while (i < n && src[i] !== "\n") i++;
+      while (i < n && src[i] !== "\n") {
+        i++;
+      }
       tokens.push({
         type: "line_comment",
         value: src.slice(start, i),
@@ -71,7 +75,9 @@ export const tokenize = (src: string): Token[] => {
     // block comment
     if (ch === "/" && src[i + 1] === "*") {
       i += 2;
-      while (i < n && !(src[i] === "*" && src[i + 1] === "/")) i++;
+      while (i < n && !(src[i] === "*" && src[i + 1] === "/")) {
+        i++;
+      }
       i = Math.min(i + 2, n);
       tokens.push({
         type: "block_comment",
@@ -96,7 +102,9 @@ export const tokenize = (src: string): Token[] => {
           i++;
         }
       }
-      if (src[i] === quote) i++;
+      if (src[i] === quote) {
+        i++;
+      }
       tokens.push({
         type: "string",
         value: src.slice(start, i),
@@ -109,7 +117,9 @@ export const tokenize = (src: string): Token[] => {
     // numbers
     if (isDigit(ch) || ((ch === "-" || ch === "+") && isDigit(src[i + 1]))) {
       i++;
-      while (i < n && /[0-9.eE+\-]/.test(src[i])) i++;
+      while (i < n && /[0-9.eE+\-]/.test(src[i])) {
+        i++;
+      }
       tokens.push({
         type: "number",
         value: src.slice(start, i),
@@ -122,7 +132,9 @@ export const tokenize = (src: string): Token[] => {
     // identifiers / keywords (unquoted keys, true/false/null, etc.)
     if (isIdentStart(ch)) {
       i++;
-      while (i < n && isIdentPart(src[i])) i++;
+      while (i < n && isIdentPart(src[i])) {
+        i++;
+      }
       const value = src.slice(start, i);
       tokens.push({
         type: KEYWORDS.has(value) ? "keyword" : "identifier",

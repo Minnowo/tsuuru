@@ -22,11 +22,14 @@ function standaloneHtml() {
       // Remove Vite-generated stylesheet link
       html = html.replace(/<link[^>]*href="[^"]+\.css"[^>]*\/?>/g, "");
 
-      // Insert CSS in head
-      html = html.replace("</head>", `<style>${css}</style>\n</head>`);
+      // Insert CSS in head. Using a replacer function (rather than a plain
+      // string) avoids `$`-pattern interpolation (`$&`, `$\``, `$'`, `$$`,
+      // ...) in the CSS/JS being treated as String.replace's special
+      // replacement patterns, which would silently corrupt the output.
+      html = html.replace("</head>", () => `<style>${css}</style>\n</head>`);
 
       // Insert JS at bottom of body
-      html = html.replace("</body>", `<script>${js}</script>\n</body>`);
+      html = html.replace("</body>", () => `<script>${js}</script>\n</body>`);
 
       await writeFile(htmlPath, html);
 

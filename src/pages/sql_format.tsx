@@ -1,4 +1,4 @@
-import { useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import {
   format,
   DEFAULT_OPTIONS,
@@ -14,6 +14,8 @@ const load = (key: string): string | null => {
 };
 
 export const SqlFormatPage = () => {
+  const outputRef = useRef<HTMLTextAreaElement>(null);
+
   const [error, setError] = useState("");
   const [input, _setInput] = useState(load("input") ?? "");
   const [output, _setOutput] = useState(load("output") ?? "");
@@ -152,6 +154,18 @@ export const SqlFormatPage = () => {
     spaceBetweenJoins,
   };
 
+  const resizeOutput = (el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    const scrollY = window.scrollY;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+    window.scrollTo(0, scrollY);
+  };
+
+  useEffect(() => {
+    resizeOutput(outputRef.current);
+  }, [output]);
+
   const runFormat = () => {
     try {
       setError("");
@@ -162,7 +176,7 @@ export const SqlFormatPage = () => {
   };
 
   return (
-    <section className="flex flex-col gap-2 p-2">
+    <section className="flex flex-col gap-2 p-2 pb-64">
       <div className="flex flex-row justify-between">
         <h1 className="font-bold">SQL Formatter</h1>
 
@@ -358,24 +372,28 @@ export const SqlFormatPage = () => {
         onInput={(e) => updateInput((e.target as HTMLTextAreaElement).value)}
       />
 
-      <button className="px-4 w-fit" onClick={runFormat}>
-        Format
-      </button>
+      <div className="flex gap-4">
+        <button className="px-4 w-fit" onClick={runFormat}>
+          Format
+        </button>
+
+        <button
+          className="px-4 w-fit"
+          onClick={() => navigator.clipboard.writeText(output)}
+        >
+          Copy Result
+        </button>
+      </div>
 
       <textarea
+        ref={outputRef}
         spellcheck={false}
         wrap={wordWrap ? "soft" : "off"}
-        className={`font-mono border rounded p-2 h-64 ${wordWrap ? "" : "whitespace-pre overflow-x-auto"}`}
+        className={`font-mono border rounded p-2 min-h-64 resize-none overflow-y-hidden ${wordWrap ? "" : "whitespace-pre overflow-x-auto"}`}
         placeholder="Formatted SQL..."
         value={output}
+        onInput={(e) => resizeOutput(e.target as HTMLTextAreaElement)}
       />
-
-      <button
-        className="px-4 w-fit"
-        onClick={() => navigator.clipboard.writeText(output)}
-      >
-        Copy Result
-      </button>
     </section>
   );
 };

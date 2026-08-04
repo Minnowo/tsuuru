@@ -1,4 +1,4 @@
-import { useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 
 const save = (key: string, value: string) => {
   sessionStorage.setItem(`base64-${key}`, value);
@@ -8,6 +8,8 @@ const load = (key: string): string | null => {
 };
 
 export const Base64Page = () => {
+  const outputRef = useRef<HTMLTextAreaElement>(null);
+
   const [error, setError] = useState("");
   const [input, _setInput] = useState(load("input") ?? "");
   const [output, _setOutput] = useState(load("output") ?? "");
@@ -43,6 +45,18 @@ export const Base64Page = () => {
     save("decode-url-safe", String(value));
     _setUrlSafe(value);
   };
+
+  const resizeOutput = (el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    const scrollY = window.scrollY;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+    window.scrollTo(0, scrollY);
+  };
+
+  useEffect(() => {
+    resizeOutput(outputRef.current);
+  }, [output]);
 
   const encode = () => {
     try {
@@ -97,7 +111,7 @@ export const Base64Page = () => {
   };
 
   return (
-    <section className="flex flex-col gap-2 p-2">
+    <section className="flex flex-col gap-2 p-2 pb-64">
       <div className="flex flex-row justify-between">
         <h1 className="font-bold">Base64 Encode / Decode</h1>
 
@@ -164,22 +178,24 @@ export const Base64Page = () => {
         <button className="px-4" onClick={decode}>
           Decode
         </button>
+
+        <button
+          className="px-4"
+          onClick={() => navigator.clipboard.writeText(output)}
+        >
+          Copy Result
+        </button>
       </div>
 
       <textarea
+        ref={outputRef}
         spellcheck={false}
-        className="font-mono border rounded p-2 h-48"
+        className="font-mono border rounded p-2 min-h-48 resize-none overflow-hidden"
         placeholder="Result..."
         wrap={useWordWrap ? "soft" : "off"}
         value={output}
+        onInput={(e) => resizeOutput(e.target as HTMLTextAreaElement)}
       />
-
-      <button
-        className="px-4 w-fit"
-        onClick={() => navigator.clipboard.writeText(output)}
-      >
-        Copy Result
-      </button>
     </section>
   );
 };

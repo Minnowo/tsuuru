@@ -365,15 +365,9 @@ export const RestClientPage = () => {
         value={responseHeaders}
       />
 
-      <h2 className="font-bold">Response</h2>
+      <div className="flex justify-between items-center">
+        <h2 className="font-bold">Response</h2>
 
-      <textarea
-        className="font-mono h-64"
-        spellcheck={false}
-        value={response}
-      />
-
-      <div className="flex gap-2">
         <button
           className="px-4"
           onClick={() => navigator.clipboard.writeText(response)}
@@ -381,6 +375,12 @@ export const RestClientPage = () => {
           Copy Response
         </button>
       </div>
+
+      <textarea
+        className="font-mono h-64"
+        spellcheck={false}
+        value={response}
+      />
     </section>
   );
 };

@@ -1,4 +1,4 @@
-import { useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { format as lenientFormat } from "../json/formatter";
 
 const normalizePythonDict = (value: string) => {
@@ -25,6 +25,8 @@ const load = (key: string): string | null => {
 };
 
 export const JsonFormatterPage = () => {
+  const outputRef = useRef<HTMLTextAreaElement>(null);
+
   const [input, _setInput] = useState(load("input") ?? "");
 
   const [output, _setOutput] = useState(load("output") ?? "");
@@ -54,6 +56,18 @@ export const JsonFormatterPage = () => {
     save("sort-keys", String(value));
     _setSortKeys(value);
   };
+
+  const resizeOutput = (el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    const scrollY = window.scrollY;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+    window.scrollTo(0, scrollY);
+  };
+
+  useEffect(() => {
+    resizeOutput(outputRef.current);
+  }, [output]);
 
   const sortObjectKeys = (obj: unknown): unknown => {
     if (Array.isArray(obj)) {
@@ -122,7 +136,7 @@ export const JsonFormatterPage = () => {
   };
 
   return (
-    <section className="flex flex-col gap-2 p-2">
+    <section className="flex flex-col gap-2 p-2 pb-64">
       <div className="flex flex-row justify-between">
         <h1 className="font-bold">JSON Formatter</h1>
 
@@ -183,21 +197,23 @@ export const JsonFormatterPage = () => {
         <button className="px-4" onClick={minify}>
           Minify
         </button>
+
+        <button
+          className="px-4"
+          onClick={() => navigator.clipboard.writeText(output)}
+        >
+          Copy Result
+        </button>
       </div>
 
       <textarea
+        ref={outputRef}
         spellcheck={false}
-        className="font-mono border rounded p-2 h-64"
+        className="font-mono border rounded p-2 min-h-64 resize-none overflow-hidden"
         placeholder="Formatted JSON..."
         value={output}
+        onInput={(e) => resizeOutput(e.target as HTMLTextAreaElement)}
       />
-
-      <button
-        className="px-4 w-fit"
-        onClick={() => navigator.clipboard.writeText(output)}
-      >
-        Copy Result
-      </button>
     </section>
   );
 };

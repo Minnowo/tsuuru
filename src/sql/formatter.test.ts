@@ -296,9 +296,9 @@ describe("selectColumnsMaxWidth", () => {
   const sql =
     "SELECT some_long_column_name_12345679, another_long_column_name FROM some_very_long_table_name";
 
-  it("does nothing when disabled (the default)", () => {
+  it("does nothing when disabled", () => {
     assert.equal(
-      format(sql),
+      format(sql, { selectColumnsMaxWidth: 0, maxInlineWidth: 80 }),
       [
         "SELECT some_long_column_name_12345679, another_long_column_name",
         "FROM some_very_long_table_name",
@@ -308,7 +308,7 @@ describe("selectColumnsMaxWidth", () => {
 
   it("does nothing when the column list fits within it", () => {
     assert.equal(
-      format(sql, { selectColumnsMaxWidth: 200 }),
+      format(sql, { selectColumnsMaxWidth: 200, maxInlineWidth: 80 }),
       [
         "SELECT some_long_column_name_12345679, another_long_column_name",
         "FROM some_very_long_table_name",
@@ -372,13 +372,31 @@ describe("CASE statements", () => {
 
 describe("comments", () => {
   it("keeps comments by default", () => {
-    const out = format("SELECT a -- keep me\nFROM t");
+    const out = format("SELECT a -- keep me\nFROM t /* keep too */");
     assert.ok(out.includes("-- keep me"));
+    assert.ok(out.includes("keep too"));
   });
 
-  it("removes comments when configured", () => {
+  it("removes only line comments when removeLineComments is set", () => {
+    const out = format("SELECT a -- drop me\nFROM t /* keep me */", {
+      removeLineComments: true,
+    });
+    assert.ok(!out.includes("drop me"));
+    assert.ok(out.includes("keep me"));
+  });
+
+  it("removes only block comments when removeBlockComments is set", () => {
+    const out = format("SELECT a -- keep me\nFROM t /* drop me */", {
+      removeBlockComments: true,
+    });
+    assert.ok(out.includes("keep me"));
+    assert.ok(!out.includes("drop me"));
+  });
+
+  it("removes both when both are set", () => {
     const out = format("SELECT a -- drop me\nFROM t /* also drop */", {
-      removeComments: true,
+      removeLineComments: true,
+      removeBlockComments: true,
     });
     assert.ok(!out.includes("drop me"));
     assert.ok(!out.includes("also drop"));

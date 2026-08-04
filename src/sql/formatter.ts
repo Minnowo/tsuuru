@@ -22,8 +22,11 @@ export type FormatterOptions = {
   // WHEN/ELSE/END.
   collapseCaseStatements: boolean;
 
-  // 5. Strip comments from the output entirely.
-  removeComments: boolean;
+  // 5. Strip `--` (and `#`) line comments from the output entirely.
+  removeLineComments: boolean;
+
+  // Strip /* ... */ block comments from the output entirely.
+  removeBlockComments: boolean;
 
   // Blank lines to leave between top-level `;`-separated statements.
   linesBetweenStatements: number;
@@ -56,7 +59,8 @@ export const DEFAULT_OPTIONS: FormatterOptions = {
   indentChar: " ",
   maxInlineWidth: 120,
   collapseCaseStatements: false,
-  removeComments: false,
+  removeLineComments: false,
+  removeBlockComments: false,
   linesBetweenStatements: 1,
   trailingSemicolon: false,
   alwaysBreakOn: false,
@@ -1071,9 +1075,11 @@ export const format = (sql: string, userOptions: Partial<FormatterOptions> = {})
   const opts: FormatterOptions = { ...DEFAULT_OPTIONS, ...userOptions };
 
   const allTokens = tokenize(sql).filter((t) => t.type !== "whitespace");
-  const tokens = opts.removeComments
-    ? allTokens.filter((t) => t.type !== "line_comment" && t.type !== "block_comment")
-    : allTokens;
+  const tokens = allTokens.filter(
+    (t) =>
+      !(opts.removeLineComments && t.type === "line_comment") &&
+      !(opts.removeBlockComments && t.type === "block_comment"),
+  );
 
   const statements = splitStatements(tokens);
   const rendered: string[] = [];

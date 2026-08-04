@@ -28,7 +28,8 @@ export const SqlFormatPage = () => {
     Number(load("max-inline-width") ?? DEFAULT_OPTIONS.maxInlineWidth),
   );
   const [collapseCaseStatements, _setCollapseCaseStatements] = useState<boolean>( load("collapse-case") !== "false");
-  const [removeComments, _setRemoveComments] = useState<boolean>( load("remove-comments") === "true");
+  const [removeLineComments, _setRemoveLineComments] = useState<boolean>( load("remove-line-comments") === "true");
+  const [removeBlockComments, _setRemoveBlockComments] = useState<boolean>( load("remove-block-comments") === "true");
   const [trailingSemicolon, _setTrailingSemicolon] = useState<boolean>( load("trailing-semicolon") === "true");
   const [linesBetweenStatements, _setLinesBetweenStatements] =
     useState<number>(
@@ -75,9 +76,14 @@ export const SqlFormatPage = () => {
     _setCollapseCaseStatements(value);
   };
 
-  const setRemoveComments = (value: boolean) => {
-    save("remove-comments", String(value));
-    _setRemoveComments(value);
+  const setRemoveLineComments = (value: boolean) => {
+    save("remove-line-comments", String(value));
+    _setRemoveLineComments(value);
+  };
+
+  const setRemoveBlockComments = (value: boolean) => {
+    save("remove-block-comments", String(value));
+    _setRemoveBlockComments(value);
   };
 
   const setTrailingSemicolon = (value: boolean) => {
@@ -120,7 +126,8 @@ export const SqlFormatPage = () => {
     indentSize,
     maxInlineWidth,
     collapseCaseStatements,
-    removeComments,
+    removeLineComments,
+    removeBlockComments,
     trailingSemicolon,
     linesBetweenStatements,
     alwaysBreakOn,
@@ -225,12 +232,23 @@ export const SqlFormatPage = () => {
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
-            checked={removeComments}
+            checked={removeLineComments}
             onChange={(e) =>
-              setRemoveComments((e.target as HTMLInputElement).checked)
+              setRemoveLineComments((e.target as HTMLInputElement).checked)
             }
           />
-          Remove comments
+          Remove line comments
+        </label>
+
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={removeBlockComments}
+            onChange={(e) =>
+              setRemoveBlockComments((e.target as HTMLInputElement).checked)
+            }
+          />
+          Remove block comments
         </label>
 
         <label className="flex items-center gap-2">

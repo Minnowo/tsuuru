@@ -70,6 +70,13 @@ export const SqlFormatPage = () => {
         ? false
         : DEFAULT_OPTIONS.expandSelectColumns,
   );
+  const [selectColumnsMaxWidth, _setSelectColumnsMaxWidth] =
+    useState<number>(
+      Number(
+        load("select-columns-max-width") ??
+          DEFAULT_OPTIONS.selectColumnsMaxWidth,
+      ),
+    );
 
   const updateInput = (value: string) => {
     save("input", value);
@@ -126,6 +133,11 @@ export const SqlFormatPage = () => {
     _setExpandSelectColumns(value);
   };
 
+  const setSelectColumnsMaxWidth = (value: number) => {
+    save("select-columns-max-width", String(value));
+    _setSelectColumnsMaxWidth(value);
+  };
+
   const options: Partial<FormatterOptions> = {
     keywordCase,
     indentSize,
@@ -136,6 +148,7 @@ export const SqlFormatPage = () => {
     linesBetweenStatements,
     alwaysBreakOn,
     expandSelectColumns,
+    selectColumnsMaxWidth,
   };
 
   const runFormat = () => {
@@ -273,6 +286,22 @@ export const SqlFormatPage = () => {
             }
           />
           Expand SELECT columns, comma-first
+        </label>
+
+        <label className="flex items-center gap-2">
+          Select columns max width (0 = off):
+          <input
+            type="number"
+            min={0}
+            max={400}
+            className="w-20"
+            value={selectColumnsMaxWidth}
+            onInput={(e) =>
+              setSelectColumnsMaxWidth(
+                Number((e.target as HTMLInputElement).value) || 0,
+              )
+            }
+          />
         </label>
 
         <button

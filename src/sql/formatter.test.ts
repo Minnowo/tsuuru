@@ -210,17 +210,14 @@ describe("alwaysBreakOn", () => {
 });
 
 describe("expandSelectColumns", () => {
-  it("keeps columns inline by default", () => {
-    assert.equal(
-      format("SELECT a, b, c FROM t"),
-      ["SELECT a, b, c", "FROM t"].join("\n"),
-    );
+  it("keeps a simple SELECT...FROM on one line by default, even with multiple columns", () => {
+    assert.equal(format("SELECT a, b, c FROM t"), "SELECT a, b, c FROM t");
   });
 
   it("puts each column on its own line, comma-first, when enabled", () => {
     assert.equal(
       format("SELECT a, b, c FROM t", { expandSelectColumns: true }),
-      ["SELECT", "  a", "  , b", "  , c", "FROM t"].join("\n"),
+      ["SELECT", "  a", ", b", ", c", "FROM t"].join("\n"),
     );
   });
 
@@ -229,14 +226,68 @@ describe("expandSelectColumns", () => {
       format("SELECT COUNT(*) AS total, a.name FROM t", {
         expandSelectColumns: true,
       }),
-      ["SELECT", "  COUNT(*) AS total", "  , a.name", "FROM t"].join("\n"),
+      ["SELECT", "  COUNT(*) AS total", ", a.name", "FROM t"].join("\n"),
     );
   });
 
-  it("works with a single column", () => {
+  it("still merges a single column onto one line, even when enabled", () => {
     assert.equal(
       format("SELECT a FROM t", { expandSelectColumns: true }),
-      ["SELECT", "  a", "FROM t"].join("\n"),
+      "SELECT a FROM t",
+    );
+  });
+});
+
+describe("selectColumnsMaxWidth", () => {
+  const sql =
+    "SELECT some_long_column_name_12345679, another_long_column_name FROM some_very_long_table_name";
+
+  it("does nothing when disabled (the default)", () => {
+    assert.equal(
+      format(sql),
+      [
+        "SELECT some_long_column_name_12345679, another_long_column_name",
+        "FROM some_very_long_table_name",
+      ].join("\n"),
+    );
+  });
+
+  it("does nothing when the column list fits within it", () => {
+    assert.equal(
+      format(sql, { selectColumnsMaxWidth: 200 }),
+      [
+        "SELECT some_long_column_name_12345679, another_long_column_name",
+        "FROM some_very_long_table_name",
+      ].join("\n"),
+    );
+  });
+
+  it("expands columns, comma-first, once the column list exceeds it - for that statement only", () => {
+    assert.equal(
+      format(sql, { selectColumnsMaxWidth: 40 }),
+      [
+        "SELECT",
+        "  some_long_column_name_12345679",
+        ", another_long_column_name",
+        "FROM some_very_long_table_name",
+      ].join("\n"),
+    );
+  });
+
+  it("does not affect other SELECTs whose columns fit", () => {
+    const out = format(
+      `SELECT a FROM t1 UNION ALL SELECT some_long_column_name_12345679, another_long_column_name FROM some_very_long_table_name`,
+      { selectColumnsMaxWidth: 40 },
+    );
+    assert.ok(out.startsWith("SELECT a FROM t1\nUNION ALL"));
+  });
+
+  it("still merges a single (even very wide) column onto one line", () => {
+    assert.equal(
+      format("SELECT some_extremely_long_single_column_name FROM t", {
+        selectColumnsMaxWidth: 5,
+      }),
+      "SELECT some_extremely_long_single_column_name FROM t",
     );
   });
 });
@@ -371,9 +422,9 @@ describe("short statement collapsing", () => {
     assert.ok(out.includes("\n"));
   });
 
-  it("does not collapse when expandSelectColumns is enabled", () => {
+  it("still collapses a single column even when expandSelectColumns is enabled", () => {
     const out = format("SELECT a FROM t", { expandSelectColumns: true });
-    assert.equal(out, ["SELECT", "  a", "FROM t"].join("\n"));
+    assert.equal(out, "SELECT a FROM t");
   });
 });
 

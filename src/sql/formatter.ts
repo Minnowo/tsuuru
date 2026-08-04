@@ -3,7 +3,7 @@
 // enough to make sensible indentation decisions without needing to know the
 // full grammar of every dialect.
 
-import { tokenize, type Token } from "./tokenizer";
+import { tokenize, type Token, type TokenType } from "./tokenizer";
 
 export type KeywordCase = "upper" | "lower" | "preserve";
 
@@ -38,6 +38,12 @@ export type FormatterOptions = {
   // Always put each SELECT column on its own line, comma-first, instead of
   // keeping the column list inline.
   expandSelectColumns: boolean;
+
+  // If > 0, a SELECT whose column list would render inline wider than this
+  // gets the same comma-first, one-column-per-line layout as
+  // expandSelectColumns - but decided per-statement, not globally. 0 disables
+  // this (the default).
+  selectColumnsMaxWidth: number;
 };
 
 export const DEFAULT_OPTIONS: FormatterOptions = {
@@ -51,6 +57,7 @@ export const DEFAULT_OPTIONS: FormatterOptions = {
   trailingSemicolon: false,
   alwaysBreakOn: false,
   expandSelectColumns: false,
+  selectColumnsMaxWidth: 0,
 };
 
 // --- tree building --------------------------------------------------------
@@ -210,6 +217,10 @@ class Printer {
   current = "";
   suppressSpace = true;
   lastKind: LastKind = null;
+  // Whether the last thing printed was a complete value (identifier, number,
+  // string, closing paren, ...) as opposed to a keyword/operator/punctuation.
+  // Used to tell a unary +/- from a binary one.
+  lastWasValue = false;
   indentUnit: string;
 
   constructor(opts: FormatterOptions) {
@@ -262,12 +273,30 @@ const renderKeyword = (value: string, opts: FormatterOptions): string => {
   return value;
 };
 
+// Value-producing token types: things a following unary +/- should treat as
+// "there's already an operand here", i.e. a binary +/- context.
+const isValueTokenType = (type: TokenType): boolean =>
+  type === "identifier" ||
+  type === "quoted_identifier" ||
+  type === "number" ||
+  type === "string" ||
+  type === "dollar_string" ||
+  type === "parameter";
+
 const printPlainToken = (p: Printer, token: Token, opts: FormatterOptions) => {
   const text = token.type === "keyword" ? renderKeyword(token.value, opts) : token.value;
 
-  if (isPunct(token, ",") || isPunct(token, ";") || isPunct(token, ")")) {
+  if (isPunct(token, ",") || isPunct(token, ";")) {
     p.write(text, { spaceBefore: false });
     p.lastKind = "other";
+    p.lastWasValue = false;
+    return;
+  }
+
+  if (isPunct(token, ")")) {
+    p.write(text, { spaceBefore: false });
+    p.lastKind = "other";
+    p.lastWasValue = true;
     return;
   }
 
@@ -285,10 +314,25 @@ const printPlainToken = (p: Printer, token: Token, opts: FormatterOptions) => {
     return;
   }
 
+  // A +/- not following a value (start of expression, after a keyword,
+  // comma, or open paren) is unary: no space between it and its operand.
+  if (
+    token.type === "operator" &&
+    (token.value === "+" || token.value === "-") &&
+    !p.lastWasValue
+  ) {
+    p.write(text);
+    p.suppressSpace = true;
+    p.lastKind = "other";
+    p.lastWasValue = false;
+    return;
+  }
+
   p.write(text);
 
   if (token.type === "line_comment") {
     p.lastKind = "other";
+    p.lastWasValue = false;
     return;
   }
 
@@ -298,6 +342,7 @@ const printPlainToken = (p: Printer, token: Token, opts: FormatterOptions) => {
       : token.type === "quoted_identifier"
         ? "quoted_identifier"
         : "other";
+  p.lastWasValue = isValueTokenType(token.type);
 };
 
 const printChildrenInline = (p: Printer, nodes: Node[], opts: FormatterOptions) => {
@@ -326,12 +371,14 @@ const printParen = (p: Printer, node: ParenNode, indentLevel: number, opts: Form
   }
 
   p.lastKind = "close_paren";
+  p.lastWasValue = true;
 };
 
 const printCase = (p: Printer, node: CaseNode, indentLevel: number, opts: FormatterOptions) => {
   if (!node.multiline) {
     printChildrenInline(p, node.children, opts);
     p.lastKind = "other";
+    p.lastWasValue = true;
     return;
   }
 
@@ -359,6 +406,7 @@ const printCase = (p: Printer, node: CaseNode, indentLevel: number, opts: Format
   }
 
   p.lastKind = "other";
+  p.lastWasValue = true;
 };
 
 const printNode = (p: Printer, node: Node, indentLevel: number, opts: FormatterOptions) => {
@@ -481,17 +529,16 @@ const planJoins = (nodes: Node[]): JoinEvent[] => {
   return events;
 };
 
-// Consumes the SELECT column list starting at `startIdx` (right after the
-// SELECT keyword), splitting on top-level commas, and prints one column per
-// line, comma-first. Returns the index of the first unconsumed node (the
-// next clause-start keyword, or nodes.length).
-const printSelectColumns = (
-  p: Printer,
+// Consumes a comma-separated list of items (a SELECT column list, or an
+// old-style comma-joined FROM list) starting at `startIdx`, splitting on
+// top-level commas and stopping at the first token whose keyword is in
+// `stopKeywords`. Returns the collected items and the index of the first
+// unconsumed node.
+const collectCommaItems = (
   nodes: Node[],
   startIdx: number,
-  indentLevel: number,
-  opts: FormatterOptions,
-): number => {
+  stopKeywords: Set<string>,
+): { items: Node[][]; endIdx: number } => {
   let idx = startIdx;
   const items: Node[][] = [[]];
 
@@ -501,7 +548,7 @@ const printSelectColumns = (
     if (node.kind === "token") {
       const token = node.token;
 
-      if (token.type === "keyword" && CLAUSE_START.has(upper(token))) {
+      if (token.type === "keyword" && stopKeywords.has(upper(token))) {
         break;
       }
 
@@ -516,19 +563,253 @@ const printSelectColumns = (
     idx++;
   }
 
-  items
-    .filter((item) => item.length > 0)
-    .forEach((item, i) => {
-      p.ensureBreak(indentLevel + 1);
-      if (i > 0) {
-        p.write(",", { spaceBefore: false });
-      }
-      for (const itemNode of item) {
-        printNode(p, itemNode, indentLevel + 1, opts);
-      }
-    });
+  return { items: items.filter((item) => item.length > 0), endIdx: idx };
+};
 
-  return idx;
+// Approximate inline width of a comma-separated item list (as if rendered
+// "item1, item2, item3"), used to decide whether selectColumnsMaxWidth is
+// exceeded. Matches the same rough per-node "+1 for a separator" style used
+// elsewhere (layout(), isSimpleSelectFromBranch's width check).
+const commaListWidth = (items: Node[][], opts: FormatterOptions): number => {
+  let width = 0;
+  items.forEach((item, i) => {
+    if (i > 0) width += 2; // ", "
+    for (const node of item) {
+      width += (node.kind === "token" ? node.token.value.length : layout(node, opts)) + 1;
+    }
+  });
+  return width;
+};
+
+// Whether a SELECT's column list should get the expandSelectColumns
+// (one-per-line, comma-first) treatment: either the option is on globally,
+// or selectColumnsMaxWidth is set and this particular column list is wider
+// than it.
+const shouldExpandColumns = (items: Node[][], opts: FormatterOptions): boolean =>
+  opts.expandSelectColumns ||
+  (opts.selectColumnsMaxWidth > 0 && commaListWidth(items, opts) > opts.selectColumnsMaxWidth);
+
+// Whether the first top-level SELECT's column list would trigger
+// shouldExpandColumns. Used to keep a would-otherwise-collapse-to-one-line
+// top-level statement from bypassing printChildren (and so the
+// expandSelectColumns/selectColumnsMaxWidth column layout) entirely.
+const topLevelSelectColumnsWouldExpand = (tree: Node[], opts: FormatterOptions): boolean => {
+  const selectIdx = tree.findIndex((n) => n.kind === "token" && isKeyword(n.token, "SELECT"));
+  if (selectIdx === -1) return false;
+
+  let i = selectIdx + 1;
+  if (i < tree.length) {
+    const first = tree[i];
+    if (first.kind === "token" && first.token.type === "block_comment") return false;
+    if (first.kind === "token" && isKeyword(first.token, "DISTINCT")) i++;
+  }
+
+  const { items } = collectCommaItems(tree, i, CLAUSE_START);
+  return items.length > 1 && shouldExpandColumns(items, opts);
+};
+
+// Prints a comma-first list, one item per line. The first item is indented
+// one level past `indentLevel`; continuation lines dedent by 2 characters so
+// the leading "," lines up with, and the item content after it starts at,
+// the same column as the first item.
+const printCommaFirstList = (
+  p: Printer,
+  items: Node[][],
+  indentLevel: number,
+  opts: FormatterOptions,
+) => {
+  items.forEach((item, i) => {
+    p.ensureBreak(indentLevel + 1);
+    if (i > 0) {
+      p.current = p.current.slice(0, Math.max(0, p.current.length - 2));
+      p.write(",", { spaceBefore: false });
+    }
+    for (const itemNode of item) {
+      printNode(p, itemNode, indentLevel + 1, opts);
+    }
+  });
+};
+
+// Keywords that end a FROM target / SELECT column run - anything beyond
+// these means the simple comma-list reading doesn't apply.
+const FROM_STOP_KEYWORDS = new Set<string>([
+  ...CLAUSE_START,
+  "JOIN",
+  "LEFT",
+  "RIGHT",
+  "FULL",
+  "INNER",
+  "CROSS",
+  "NATURAL",
+  "OUTER",
+  "ON",
+  "AND",
+  "OR",
+]);
+
+// Keywords whose presence marks a node list as "statement-like" (a clause
+// list containing SELECT/FROM/WHERE/JOIN/... boundaries) rather than a bare
+// boolean condition (the direct children of a WHERE/ON/AND paren).
+const CLAUSE_KEYWORDS = new Set<string>([...CLAUSE_START, "JOIN", "LEFT", "RIGHT", "FULL", "INNER", "CROSS", "NATURAL", "OUTER", "ON"]);
+
+const hasClauseKeyword = (nodes: Node[]): boolean =>
+  nodes.some(
+    (n) => n.kind === "token" && n.token.type === "keyword" && CLAUSE_KEYWORDS.has(upper(n.token)),
+  );
+
+// Decides, for every top-level AND/OR token in `nodes`, whether it should
+// align flush with the enclosing clause/paren or be indented one level in.
+//
+// - An AND/OR immediately preceded by a closing paren always aligns flush
+//   with the paren it follows (the parens already provide visual grouping).
+// - Otherwise, inside a bare boolean-condition scope (no clause/JOIN
+//   keywords in `nodes`), a lone AND/OR stays flush too; a run of 2+
+//   chained AND/OR indents the whole run one level in, to set the list
+//   apart from a single compound comparison.
+// - Inside a statement-like scope (WHERE/JOIN/... present directly in
+//   `nodes`), AND/OR always indents one level in, regardless of chain
+//   length - this is the common `WHERE a = 1\n  AND b = 2` shape.
+const planAndOrIndent = (nodes: Node[]): Map<number, "flush" | "bump"> => {
+  const chainLengthMatters = !hasClauseKeyword(nodes);
+  const result = new Map<number, "flush" | "bump">();
+  let group: number[] = [];
+  let prevWasParen = false;
+  let pendingBetween = false;
+
+  const flushGroup = () => {
+    const mode: "flush" | "bump" = chainLengthMatters && group.length < 2 ? "flush" : "bump";
+    for (const i of group) result.set(i, mode);
+    group = [];
+  };
+
+  for (let k = 0; k < nodes.length; k++) {
+    const node = nodes[k];
+
+    if (node.kind !== "token") {
+      prevWasParen = true;
+      continue;
+    }
+
+    const token = node.token;
+    if (token.type !== "keyword") {
+      prevWasParen = false;
+      continue;
+    }
+
+    const kw = upper(token);
+
+    if (kw === "BETWEEN") {
+      pendingBetween = true;
+      prevWasParen = false;
+      continue;
+    }
+
+    if (kw === "AND" || kw === "OR") {
+      if (pendingBetween) {
+        pendingBetween = false;
+      } else if (prevWasParen) {
+        flushGroup();
+        result.set(k, "flush");
+      } else {
+        group.push(k);
+      }
+      prevWasParen = false;
+      continue;
+    }
+
+    if (CLAUSE_KEYWORDS.has(kw)) {
+      flushGroup();
+    }
+    prevWasParen = false;
+  }
+
+  flushGroup();
+  return result;
+};
+
+// Finds the end of the current SELECT branch: the next top-level
+// UNION/INTERSECT/EXCEPT keyword, or the end of `nodes`.
+const findBranchEnd = (nodes: Node[], startIdx: number): number => {
+  for (let i = startIdx; i < nodes.length; i++) {
+    const node = nodes[i];
+    if (node.kind === "token" && node.token.type === "keyword") {
+      const kw = upper(node.token);
+      if (kw === "UNION" || kw === "INTERSECT" || kw === "EXCEPT") {
+        return i;
+      }
+    }
+  }
+  return nodes.length;
+};
+
+// A branch collapses onto a single line when it's nothing more than
+// `SELECT <cols> FROM <table>` - no WHERE/GROUP/JOIN/..., no oracle hint
+// comment, nothing forced multiline, and it fits within maxInlineWidth.
+const isSimpleSelectFromBranch = (
+  nodes: Node[],
+  selectIdx: number,
+  branchEnd: number,
+  opts: FormatterOptions,
+): boolean => {
+  let i = selectIdx + 1;
+
+  if (i < branchEnd) {
+    const first = nodes[i];
+    if (first.kind === "token" && first.token.type === "block_comment") {
+      return false; // oracle hint always forces a break
+    }
+    if (first.kind === "token" && isKeyword(first.token, "DISTINCT")) {
+      i++;
+    }
+  }
+
+  const { items: columnItems, endIdx: afterColumns } = collectCommaItems(nodes, i, CLAUSE_START);
+  for (const item of columnItems) {
+    for (const node of item) {
+      if (
+        node.kind === "token" &&
+        (node.token.type === "line_comment" || node.token.type === "block_comment")
+      ) {
+        return false;
+      }
+      if (node.kind !== "token" && node.multiline) return false;
+    }
+  }
+
+  // With expandSelectColumns (or selectColumnsMaxWidth) triggering, multiple
+  // columns must each get their own line - only a single column is short
+  // enough to merge onto the FROM line too. Otherwise columns already stay
+  // inline regardless of count.
+  if (columnItems.length > 1 && shouldExpandColumns(columnItems, opts)) return false;
+
+  i = afterColumns;
+  if (i >= branchEnd || !(nodes[i].kind === "token" && isKeyword((nodes[i] as TokenNode).token, "FROM"))) {
+    return false; // no FROM directly after the column list
+  }
+  i++; // consume FROM
+  if (i >= branchEnd) return false; // FROM with no target
+
+  while (i < branchEnd) {
+    const node = nodes[i];
+    if (node.kind === "token") {
+      const token = node.token;
+      if (isPunct(token, ",")) return false; // multi-table FROM
+      if (token.type === "keyword" && upper(token) !== "AS") return false;
+      if (token.type === "line_comment" || token.type === "block_comment") return false;
+    } else if (node.multiline) {
+      return false;
+    }
+    i++;
+  }
+
+  if (i !== branchEnd) return false;
+
+  let width = 0;
+  for (let k = selectIdx; k < branchEnd; k++) {
+    const node = nodes[k];
+    width += (node.kind === "token" ? node.token.value.length : layout(node, opts)) + 1;
+  }
+  return width <= opts.maxInlineWidth;
 };
 
 const printChildren = (p: Printer, nodes: Node[], indentLevel: number, opts: FormatterOptions) => {
@@ -543,6 +824,7 @@ const printChildren = (p: Printer, nodes: Node[], indentLevel: number, opts: For
   let pendingJoins = 0;
   let joinEventIndex = 0;
   const joinEvents = planJoins(nodes);
+  const andOrPlan = planAndOrIndent(nodes);
 
   let idx = 0;
   while (idx < nodes.length) {
@@ -565,11 +847,70 @@ const printChildren = (p: Printer, nodes: Node[], indentLevel: number, opts: For
         lineIndent = indentLevel;
         clauseBaseIndent = indentLevel;
         p.ensureBreak(indentLevel);
+
+        const branchEnd = findBranchEnd(nodes, idx);
+        if (isSimpleSelectFromBranch(nodes, idx - 1, branchEnd, opts)) {
+          for (let k = idx - 1; k < branchEnd; k++) {
+            printNode(p, nodes[k], lineIndent, opts);
+          }
+          idx = branchEnd;
+          inJoinPhrase = false;
+          lastKeyword = "";
+          continue;
+        }
+
         printPlainToken(p, token, opts);
         lastKeyword = kw;
 
-        if (opts.expandSelectColumns) {
-          idx = printSelectColumns(p, nodes, idx, indentLevel, opts);
+        // An oracle-hint block comment right after SELECT stays on the
+        // SELECT line; everything else (DISTINCT, columns) is then forced
+        // onto its own line, since nothing may share a line with the hint.
+        let hasHint = false;
+        if (idx < nodes.length) {
+          const hintNode = nodes[idx];
+          if (hintNode.kind === "token" && hintNode.token.type === "block_comment") {
+            printPlainToken(p, hintNode.token, opts);
+            idx++;
+            hasHint = true;
+          }
+        }
+
+        if (idx < nodes.length) {
+          const distinctNode = nodes[idx];
+          if (distinctNode.kind === "token" && isKeyword(distinctNode.token, "DISTINCT")) {
+            if (hasHint) {
+              p.ensureBreak(indentLevel + 1);
+            }
+            printPlainToken(p, distinctNode.token, opts);
+            idx++;
+          }
+        }
+
+        {
+          const { items, endIdx } = collectCommaItems(nodes, idx, CLAUSE_START);
+          if (items.length > 0) {
+            if (items.length === 1 && !hasHint) {
+              for (const itemNode of items[0]) {
+                printNode(p, itemNode, indentLevel, opts);
+              }
+            } else if (shouldExpandColumns(items, opts)) {
+              printCommaFirstList(p, items, indentLevel, opts);
+            } else {
+              // Stays inline with SELECT, unless a hint comment already
+              // forced a break onto a fresh indented line.
+              const itemIndent = hasHint ? indentLevel + 1 : indentLevel;
+              if (hasHint) p.ensureBreak(itemIndent);
+              items.forEach((item, i) => {
+                if (i > 0) p.write(",", { spaceBefore: false });
+                for (const itemNode of item) {
+                  printNode(p, itemNode, itemIndent, opts);
+                }
+              });
+            }
+          } else if (hasHint) {
+            p.ensureBreak(indentLevel + 1);
+          }
+          idx = endIdx;
         }
         continue;
       }
@@ -612,7 +953,8 @@ const printChildren = (p: Printer, nodes: Node[], indentLevel: number, opts: For
         if (betweenPending) {
           betweenPending = false;
         } else {
-          lineIndent = clauseBaseIndent + 1;
+          const mode = andOrPlan.get(idx - 1) ?? "bump";
+          lineIndent = mode === "flush" ? clauseBaseIndent : clauseBaseIndent + 1;
           p.ensureBreak(lineIndent);
         }
         printPlainToken(p, token, opts);
@@ -631,6 +973,24 @@ const printChildren = (p: Printer, nodes: Node[], indentLevel: number, opts: For
       if (kw === "FROM" && lastKeyword === "DELETE") {
         printPlainToken(p, token, opts);
         lastKeyword = kw;
+        continue;
+      }
+
+      if (kw === "FROM") {
+        lineIndent = indentLevel;
+        clauseBaseIndent = indentLevel;
+        p.ensureBreak(indentLevel);
+        printPlainToken(p, token, opts);
+        lastKeyword = kw;
+
+        // Old-style comma-joined FROM lists get one table per line,
+        // comma-first, like an expanded SELECT column list. A single
+        // target (the common case) stays inline on the FROM line.
+        const { items, endIdx } = collectCommaItems(nodes, idx, FROM_STOP_KEYWORDS);
+        if (items.length > 1) {
+          printCommaFirstList(p, items, indentLevel, opts);
+          idx = endIdx;
+        }
         continue;
       }
 
@@ -745,6 +1105,7 @@ export const format = (sql: string, userOptions: Partial<FormatterOptions> = {})
       !hasComment &&
       !hasStructuralKeyword &&
       !opts.expandSelectColumns &&
+      !topLevelSelectColumnsWouldExpand(tree, opts) &&
       width <= opts.maxInlineWidth;
 
     const printer = new Printer(opts);

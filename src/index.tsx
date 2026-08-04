@@ -26,78 +26,39 @@ export const App = () => {
     return () => window.removeEventListener("hashchange", updateFunc);
   }, []);
 
-  const nav = (
-    <nav class="flex flex-wrap gap-x-4">
-      <a href="#base64">Base64 Encode</a>
-      <a href="#string">String Decoder</a>
-      <a href="#json">JSON Formatter</a>
-      <a href="#rest">REST Client</a>
-      <a href="#url">URL Encoder / Decoder</a>
-      <a href="#timestamp">Timestamp to ISO</a>
-      <a href="#sql">SQL Formatter</a>
-    </nav>
+  return (
+    <>
+      <nav class="flex flex-wrap gap-x-4 mb-4">
+        <a href="#base64">Base64 Encode</a>
+        <a href="#string">String Decoder</a>
+        <a href="#json">JSON Formatter</a>
+        <a href="#rest">REST Client</a>
+        <a href="#url">URL Encoder / Decoder</a>
+        <a href="#timestamp">Timestamp to ISO</a>
+        <a href="#sql">SQL Formatter</a>
+      </nav>
+      {(() => {
+        switch (hashRoute) {
+          case "#sql":
+            return <SqlFormatPage />;
+          case "#url":
+            return <UrlEncoderPage />;
+          case "#timestamp":
+            return <TimestampPage />;
+          case "#rest":
+            return <RestClientPage />;
+          case "#json":
+            return <JsonFormatterPage />;
+          case "#string":
+            return <StringDecodePage />;
+          case "#base64":
+            return <Base64Page />;
+          default:
+            return null;
+        }
+      })()}
+    </>
   );
-
-  switch (hashRoute) {
-    case "#sql":
-      return (
-        <>
-          {nav}
-          <hr className="my-2" />
-          <SqlFormatPage />
-        </>
-      );
-    case "#url":
-      return (
-        <>
-          {nav}
-          <hr className="my-2" />
-          <UrlEncoderPage />
-        </>
-      );
-    case "#timestamp":
-      return (
-        <>
-          {nav}
-          <hr className="my-2" />
-          <TimestampPage />
-        </>
-      );
-    case "#rest":
-      return (
-        <>
-          {nav}
-          <hr className="my-2" />
-          <RestClientPage />
-        </>
-      );
-    case "#json":
-      return (
-        <>
-          {nav}
-          <hr className="my-2" />
-          <JsonFormatterPage />
-        </>
-      );
-    case "#string":
-      return (
-        <>
-          {nav}
-          <hr className="my-2" />
-          <StringDecodePage />
-        </>
-      );
-    case "#base64":
-      return (
-        <>
-          {nav}
-          <hr className="my-2" />
-          <Base64Page />
-        </>
-      );
-    default:
-      return nav;
-  }
 };
 
 render(<App />, document.getElementById("app"));

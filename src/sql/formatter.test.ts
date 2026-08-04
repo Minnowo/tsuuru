@@ -473,10 +473,13 @@ describe("short statement collapsing", () => {
     const sql =
       "SELECT some_long_column_name, another_long_column_name FROM some_very_long_table_name";
 
-    const out = format(sql, { maxInlineWidth: 40 });
-
-    assert.ok(out.includes("\n"));
-    assert.ok(out.startsWith("SELECT\n") || out.startsWith("SELECT some_long_column_name\nFROM"));
+    assert.equal(
+      format(sql, { maxInlineWidth: 40 }),
+      [
+        "SELECT some_long_column_name, another_long_column_name",
+        "FROM some_very_long_table_name",
+      ].join("\n"),
+    );
   });
 
   it("never collapses a statement containing JOIN, even if short", () => {

@@ -44,7 +44,8 @@ describe("indentation", () => {
   });
 
   it("indents nested subqueries progressively deeper", () => {
-    const sql = "SELECT * FROM (SELECT * FROM (SELECT * FROM t WHERE a = 1) x) y";
+    const sql =
+      "SELECT * FROM (SELECT * FROM (SELECT * FROM t WHERE a = 1) x) y";
 
     assert.equal(
       format(sql),
@@ -63,8 +64,7 @@ describe("indentation", () => {
   });
 
   it("keeps sequential (non-nested) joins compact, one per line", () => {
-    const sql =
-      "SELECT * FROM a JOIN b ON a.id = b.id JOIN c ON a.id = c.id";
+    const sql = "SELECT * FROM a JOIN b ON a.id = b.id JOIN c ON a.id = c.id";
 
     assert.equal(
       format(sql),
@@ -167,12 +167,9 @@ describe("AND / OR placement", () => {
 
     assert.equal(
       format(sql),
-      [
-        "SELECT *",
-        "FROM a",
-        "JOIN b ON a.id = b.id",
-        "  AND a.x = b.y",
-      ].join("\n"),
+      ["SELECT *", "FROM a", "JOIN b ON a.id = b.id", "  AND a.x = b.y"].join(
+        "\n",
+      ),
     );
   });
 });
@@ -193,7 +190,8 @@ describe("alwaysBreakOn", () => {
   });
 
   it("still aligns ON with its own JOIN's depth in a grouped join chain", () => {
-    const sql = "SELECT * FROM t1 JOIN t2 JOIN t3 ON t2.id = t3.id ON t1.id = t2.id";
+    const sql =
+      "SELECT * FROM t1 JOIN t2 JOIN t3 ON t2.id = t3.id ON t1.id = t2.id";
 
     assert.equal(
       format(sql, { alwaysBreakOn: true }),
@@ -213,9 +211,12 @@ describe("spaceBetweenJoins", () => {
   it("does not add blank lines by default", () => {
     assert.equal(
       format("SELECT * FROM a JOIN b ON a.id = b.id JOIN c ON a.id = c.id"),
-      ["SELECT *", "FROM a", "JOIN b ON a.id = b.id", "JOIN c ON a.id = c.id"].join(
-        "\n",
-      ),
+      [
+        "SELECT *",
+        "FROM a",
+        "JOIN b ON a.id = b.id",
+        "JOIN c ON a.id = c.id",
+      ].join("\n"),
     );
   });
 
@@ -245,7 +246,8 @@ describe("spaceBetweenJoins", () => {
   });
 
   it("still separates joins nested in a grouped join chain", () => {
-    const sql = "SELECT * FROM t1 JOIN t2 JOIN t3 ON t2.id = t3.id ON t1.id = t2.id";
+    const sql =
+      "SELECT * FROM t1 JOIN t2 JOIN t3 ON t2.id = t3.id ON t1.id = t2.id";
 
     assert.equal(
       format(sql, { spaceBetweenJoins: true }),

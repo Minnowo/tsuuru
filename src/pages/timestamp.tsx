@@ -23,9 +23,7 @@ export const TimestampPage = () => {
   const [error, setError] = useState("");
   const [input, _setInput] = useState(load("input") ?? "");
   const [output, _setOutput] = useState(load("output") ?? "");
-  const [unit, _setUnit] = useState<Unit>(
-    (load("unit") as Unit) ?? "seconds",
-  );
+  const [unit, _setUnit] = useState<Unit>((load("unit") as Unit) ?? "seconds");
   const [useUtc, _setUseUtc] = useState(load("use-utc") === "true");
 
   const updateInput = (value: string) => {
@@ -90,7 +88,20 @@ export const TimestampPage = () => {
 
   return (
     <section className="flex flex-col gap-2 p-2">
-      <h1 className="font-bold">Timestamp to Human Readable</h1>
+      <div className="flex flex-row justify-between">
+        <h1 className="font-bold">Timestamp to Human Readable</h1>
+
+        <button
+          className="px-4 text-c-red font-bold"
+          onClick={() => {
+            updateInput("");
+            updateOutput("");
+            setError("");
+          }}
+        >
+          Clear
+        </button>
+      </div>
 
       <div className="flex gap-4 items-center">
         <label className="flex items-center gap-2">
@@ -119,17 +130,6 @@ export const TimestampPage = () => {
 
         <button className="px-4" onClick={useNow}>
           Now
-        </button>
-
-        <button
-          className="px-4"
-          onClick={() => {
-            updateInput("");
-            updateOutput("");
-            setError("");
-          }}
-        >
-          Clear
         </button>
       </div>
 

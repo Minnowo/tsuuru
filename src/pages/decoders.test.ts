@@ -62,10 +62,7 @@ describe("Binary String", () => {
   });
 
   it("throws when length is not a multiple of 8", () => {
-    assert.throws(
-      () => decode("Binary String", "0110100"),
-      /multiple of 8/,
-    );
+    assert.throws(() => decode("Binary String", "0110100"), /multiple of 8/);
   });
 });
 

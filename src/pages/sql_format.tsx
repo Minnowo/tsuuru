@@ -27,24 +27,40 @@ export const SqlFormatPage = () => {
   const [maxInlineWidth, _setMaxInlineWidth] = useState<number>(
     Number(load("max-inline-width") ?? DEFAULT_OPTIONS.maxInlineWidth),
   );
-  const [collapseCaseStatements, _setCollapseCaseStatements] = useState<boolean>( load("collapse-case") !== "false");
-  const [removeLineComments, _setRemoveLineComments] = useState<boolean>( load("remove-line-comments") === "true");
-  const [removeBlockComments, _setRemoveBlockComments] = useState<boolean>( load("remove-block-comments") === "true");
-  const [trailingSemicolon, _setTrailingSemicolon] = useState<boolean>( load("trailing-semicolon") === "true");
-  const [linesBetweenStatements, _setLinesBetweenStatements] =
-    useState<number>(
-      Number(
-        load("lines-between-statements") ??
-          DEFAULT_OPTIONS.linesBetweenStatements,
-      ),
-    );
-  const [alwaysBreakOn, _setAlwaysBreakOn] = useState<boolean>( load("always-break-on") === "true");
-  const [expandSelectColumns, _setExpandSelectColumns] = useState<boolean>( load("expand-select-columns") === "true");
-  const [selectColumnsMaxWidth, _setSelectColumnsMaxWidth] =
-    useState<number>( Number( load("select-columns-max-width") ?? DEFAULT_OPTIONS.selectColumnsMaxWidth),
-    );
-  const [wordWrap, _setWordWrap] = useState<boolean>( load("word-wrap") === "false");
-  const [spaceBetweenJoins, _setSpaceBetweenJoins] = useState<boolean>( load("space-between-joins") !== "false");
+  const [collapseCaseStatements, _setCollapseCaseStatements] =
+    useState<boolean>(load("collapse-case") !== "false");
+  const [removeLineComments, _setRemoveLineComments] = useState<boolean>(
+    load("remove-line-comments") === "true",
+  );
+  const [removeBlockComments, _setRemoveBlockComments] = useState<boolean>(
+    load("remove-block-comments") === "true",
+  );
+  const [trailingSemicolon, _setTrailingSemicolon] = useState<boolean>(
+    load("trailing-semicolon") === "true",
+  );
+  const [linesBetweenStatements, _setLinesBetweenStatements] = useState<number>(
+    Number(
+      load("lines-between-statements") ??
+        DEFAULT_OPTIONS.linesBetweenStatements,
+    ),
+  );
+  const [alwaysBreakOn, _setAlwaysBreakOn] = useState<boolean>(
+    load("always-break-on") === "true",
+  );
+  const [expandSelectColumns, _setExpandSelectColumns] = useState<boolean>(
+    load("expand-select-columns") === "true",
+  );
+  const [selectColumnsMaxWidth, _setSelectColumnsMaxWidth] = useState<number>(
+    Number(
+      load("select-columns-max-width") ?? DEFAULT_OPTIONS.selectColumnsMaxWidth,
+    ),
+  );
+  const [wordWrap, _setWordWrap] = useState<boolean>(
+    load("word-wrap") === "false",
+  );
+  const [spaceBetweenJoins, _setSpaceBetweenJoins] = useState<boolean>(
+    load("space-between-joins") !== "false",
+  );
 
   const updateInput = (value: string) => {
     save("input", value);
@@ -147,7 +163,20 @@ export const SqlFormatPage = () => {
 
   return (
     <section className="flex flex-col gap-2 p-2">
-      <h1 className="font-bold">SQL Formatter</h1>
+      <div className="flex flex-row justify-between">
+        <h1 className="font-bold">SQL Formatter</h1>
+
+        <button
+          className="px-4 text-c-red font-bold"
+          onClick={() => {
+            updateInput("");
+            updateOutput("");
+            setError("");
+          }}
+        >
+          Clear
+        </button>
+      </div>
 
       <div className="flex flex-wrap gap-4 items-center">
         <label className="flex items-center gap-2">
@@ -175,9 +204,7 @@ export const SqlFormatPage = () => {
             className="w-16"
             value={indentSize}
             onInput={(e) =>
-              setIndentSize(
-                Number((e.target as HTMLInputElement).value) || 1,
-              )
+              setIndentSize(Number((e.target as HTMLInputElement).value) || 1)
             }
           />
         </label>
@@ -213,6 +240,21 @@ export const SqlFormatPage = () => {
             }
           />
         </label>
+        <label className="flex items-center gap-2">
+          Select columns max width (0 = off):
+          <input
+            type="number"
+            min={0}
+            max={400}
+            className="w-20"
+            value={selectColumnsMaxWidth}
+            onInput={(e) =>
+              setSelectColumnsMaxWidth(
+                Number((e.target as HTMLInputElement).value) || 0,
+              )
+            }
+          />
+        </label>
       </div>
 
       <div className="flex flex-wrap gap-4 items-center">
@@ -221,9 +263,7 @@ export const SqlFormatPage = () => {
             type="checkbox"
             checked={collapseCaseStatements}
             onChange={(e) =>
-              setCollapseCaseStatements(
-                (e.target as HTMLInputElement).checked,
-              )
+              setCollapseCaseStatements((e.target as HTMLInputElement).checked)
             }
           />
           Collapse CASE statements to a single line
@@ -296,22 +336,6 @@ export const SqlFormatPage = () => {
         </label>
 
         <label className="flex items-center gap-2">
-          Select columns max width (0 = off):
-          <input
-            type="number"
-            min={0}
-            max={400}
-            className="w-20"
-            value={selectColumnsMaxWidth}
-            onInput={(e) =>
-              setSelectColumnsMaxWidth(
-                Number((e.target as HTMLInputElement).value) || 0,
-              )
-            }
-          />
-        </label>
-
-        <label className="flex items-center gap-2">
           <input
             type="checkbox"
             checked={wordWrap}
@@ -321,17 +345,6 @@ export const SqlFormatPage = () => {
           />
           Word wrap
         </label>
-
-        <button
-          className="px-4"
-          onClick={() => {
-            updateInput("");
-            updateOutput("");
-            setError("");
-          }}
-        >
-          Clear
-        </button>
       </div>
 
       {error && <div className="text-c-red">{error}</div>}

@@ -54,7 +54,20 @@ export const UrlEncoderPage = () => {
 
   return (
     <section className="flex flex-col gap-2 p-2">
-      <h1 className="font-bold">URL Encoder / Decoder</h1>
+      <div className="flex flex-row justify-between">
+        <h1 className="font-bold">URL Encoder / Decoder</h1>
+
+        <button
+          className="px-4 text-c-red font-bold"
+          onClick={() => {
+            updateInput("");
+            updateOutput("");
+            setError("");
+          }}
+        >
+          Clear
+        </button>
+      </div>
 
       <div className="flex gap-4">
         <label className="flex items-center gap-2">
@@ -67,16 +80,6 @@ export const UrlEncoderPage = () => {
           />
           Encode component (also encodes &, /, ?, :, etc.)
         </label>
-        <button
-          className="px-4"
-          onClick={() => {
-            updateInput("");
-            updateOutput("");
-            setError("");
-          }}
-        >
-          Clear
-        </button>
       </div>
 
       {error && <div className="text-c-red">{error}</div>}

@@ -223,7 +223,23 @@ export const RestClientPage = () => {
 
   return (
     <section className="flex flex-col gap-2 p-2">
-      <h1 className="font-bold">REST Client</h1>
+      <div className="flex flex-row justify-between">
+        <h1 className="font-bold">REST Client</h1>
+
+        <button
+          className="px-4 text-c-red font-bold"
+          onClick={() => {
+            setUrl("");
+            setHeaders("");
+            setBody("");
+            setResponse("");
+            setResponseHeaders("");
+            setError("");
+          }}
+        >
+          Clear
+        </button>
+      </div>
 
       <div className="flex gap-2">
         <select
@@ -251,10 +267,6 @@ export const RestClientPage = () => {
             setUrl(value);
           }}
         />
-
-        <button className="px-4" onClick={sendRequest}>
-          Send
-        </button>
       </div>
 
       {error && <div className="text-c-red">{error}</div>}
@@ -349,6 +361,9 @@ export const RestClientPage = () => {
       />
 
       <div className="flex gap-4">
+        <button className="px-4" onClick={sendRequest}>
+          Send
+        </button>
         <span>Status: {status}</span>
 
         <span>Time: {time}</span>
@@ -376,20 +391,6 @@ export const RestClientPage = () => {
           onClick={() => navigator.clipboard.writeText(response)}
         >
           Copy Response
-        </button>
-
-        <button
-          className="px-4"
-          onClick={() => {
-            setUrl("");
-            setHeaders("");
-            setBody("");
-            setResponse("");
-            setResponseHeaders("");
-            setError("");
-          }}
-        >
-          Clear
         </button>
       </div>
     </section>

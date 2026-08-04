@@ -98,7 +98,19 @@ export const Base64Page = () => {
 
   return (
     <section className="flex flex-col gap-2 p-2">
-      <h1 className="font-bold">Base64 Encode / Decode</h1>
+      <div className="flex flex-row justify-between">
+        <h1 className="font-bold">Base64 Encode / Decode</h1>
+
+        <button
+          className="px-4 text-c-red font-bold"
+          onClick={() => {
+            updateInput("");
+            updateOutput("");
+          }}
+        >
+          Clear
+        </button>
+      </div>
 
       <div className="flex gap-4">
         <label className="flex items-center gap-2">
@@ -131,15 +143,6 @@ export const Base64Page = () => {
           />
           Word wrap
         </label>
-        <button
-          className="px-4"
-          onClick={() => {
-            updateInput("");
-            updateOutput("");
-          }}
-        >
-          Clear
-        </button>
       </div>
 
       {error && <div className="text-c-red">{error}</div>}

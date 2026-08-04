@@ -189,7 +189,8 @@ const layout = (node: Node, opts: FormatterOptions): number => {
       }
       if (
         child.kind === "token" &&
-        (child.token.type === "line_comment" || child.token.type === "block_comment")
+        (child.token.type === "line_comment" ||
+          child.token.type === "block_comment")
       ) {
         forced = true;
       }
@@ -219,7 +220,12 @@ const layout = (node: Node, opts: FormatterOptions): number => {
 
 // --- printer ------------------------------------------------------------
 
-type LastKind = "identifier" | "quoted_identifier" | "close_paren" | "other" | null;
+type LastKind =
+  | "identifier"
+  | "quoted_identifier"
+  | "close_paren"
+  | "other"
+  | null;
 
 class Printer {
   lines: string[] = [];
@@ -306,7 +312,8 @@ const isValueTokenType = (type: TokenType): boolean =>
   type === "parameter";
 
 const printPlainToken = (p: Printer, token: Token, opts: FormatterOptions) => {
-  const text = token.type === "keyword" ? renderKeyword(token.value, opts) : token.value;
+  const text =
+    token.type === "keyword" ? renderKeyword(token.value, opts) : token.value;
 
   if (isPunct(token, ",") || isPunct(token, ";")) {
     p.write(text, { spaceBefore: false });
@@ -367,13 +374,22 @@ const printPlainToken = (p: Printer, token: Token, opts: FormatterOptions) => {
   p.lastWasValue = isValueTokenType(token.type);
 };
 
-const printChildrenInline = (p: Printer, nodes: Node[], opts: FormatterOptions) => {
+const printChildrenInline = (
+  p: Printer,
+  nodes: Node[],
+  opts: FormatterOptions,
+) => {
   for (const node of nodes) {
     printNode(p, node, 0, opts);
   }
 };
 
-const printParen = (p: Printer, node: ParenNode, indentLevel: number, opts: FormatterOptions) => {
+const printParen = (
+  p: Printer,
+  node: ParenNode,
+  indentLevel: number,
+  opts: FormatterOptions,
+) => {
   const noSpaceBefore =
     p.lastKind === "identifier" ||
     p.lastKind === "quoted_identifier" ||
@@ -396,7 +412,12 @@ const printParen = (p: Printer, node: ParenNode, indentLevel: number, opts: Form
   p.lastWasValue = true;
 };
 
-const printCase = (p: Printer, node: CaseNode, indentLevel: number, opts: FormatterOptions) => {
+const printCase = (
+  p: Printer,
+  node: CaseNode,
+  indentLevel: number,
+  opts: FormatterOptions,
+) => {
   if (!node.multiline) {
     printChildrenInline(p, node.children, opts);
     p.lastKind = "other";
@@ -431,7 +452,12 @@ const printCase = (p: Printer, node: CaseNode, indentLevel: number, opts: Format
   p.lastWasValue = true;
 };
 
-const printNode = (p: Printer, node: Node, indentLevel: number, opts: FormatterOptions) => {
+const printNode = (
+  p: Printer,
+  node: Node,
+  indentLevel: number,
+  opts: FormatterOptions,
+) => {
   if (node.kind === "token") {
     printPlainToken(p, node.token, opts);
     return;
@@ -469,7 +495,15 @@ const CLAUSE_START = new Set([
 // JOIN and its modifiers (LEFT OUTER JOIN, INNER JOIN, ...) are treated as a
 // single phrase: the break happens before the first modifier, not before
 // JOIN itself.
-const JOIN_MODIFIERS = new Set(["LEFT", "RIGHT", "FULL", "INNER", "CROSS", "NATURAL", "OUTER"]);
+const JOIN_MODIFIERS = new Set([
+  "LEFT",
+  "RIGHT",
+  "FULL",
+  "INNER",
+  "CROSS",
+  "NATURAL",
+  "OUTER",
+]);
 
 // Keywords that, if present anywhere in a statement, keep it in the
 // clause-by-clause layout even if it would otherwise be short enough to
@@ -597,7 +631,9 @@ const commaListWidth = (items: Node[][], opts: FormatterOptions): number => {
   items.forEach((item, i) => {
     if (i > 0) width += 2; // ", "
     for (const node of item) {
-      width += (node.kind === "token" ? node.token.value.length : layout(node, opts)) + 1;
+      width +=
+        (node.kind === "token" ? node.token.value.length : layout(node, opts)) +
+        1;
     }
   });
   return width;
@@ -607,22 +643,32 @@ const commaListWidth = (items: Node[][], opts: FormatterOptions): number => {
 // (one-per-line, comma-first) treatment: either the option is on globally,
 // or selectColumnsMaxWidth is set and this particular column list is wider
 // than it.
-const shouldExpandColumns = (items: Node[][], opts: FormatterOptions): boolean =>
+const shouldExpandColumns = (
+  items: Node[][],
+  opts: FormatterOptions,
+): boolean =>
   opts.expandSelectColumns ||
-  (opts.selectColumnsMaxWidth > 0 && commaListWidth(items, opts) > opts.selectColumnsMaxWidth);
+  (opts.selectColumnsMaxWidth > 0 &&
+    commaListWidth(items, opts) > opts.selectColumnsMaxWidth);
 
 // Whether the first top-level SELECT's column list would trigger
 // shouldExpandColumns. Used to keep a would-otherwise-collapse-to-one-line
 // top-level statement from bypassing printChildren (and so the
 // expandSelectColumns/selectColumnsMaxWidth column layout) entirely.
-const topLevelSelectColumnsWouldExpand = (tree: Node[], opts: FormatterOptions): boolean => {
-  const selectIdx = tree.findIndex((n) => n.kind === "token" && isKeyword(n.token, "SELECT"));
+const topLevelSelectColumnsWouldExpand = (
+  tree: Node[],
+  opts: FormatterOptions,
+): boolean => {
+  const selectIdx = tree.findIndex(
+    (n) => n.kind === "token" && isKeyword(n.token, "SELECT"),
+  );
   if (selectIdx === -1) return false;
 
   let i = selectIdx + 1;
   if (i < tree.length) {
     const first = tree[i];
-    if (first.kind === "token" && first.token.type === "block_comment") return false;
+    if (first.kind === "token" && first.token.type === "block_comment")
+      return false;
     if (first.kind === "token" && isKeyword(first.token, "DISTINCT")) i++;
   }
 
@@ -672,11 +718,25 @@ const FROM_STOP_KEYWORDS = new Set<string>([
 // Keywords whose presence marks a node list as "statement-like" (a clause
 // list containing SELECT/FROM/WHERE/JOIN/... boundaries) rather than a bare
 // boolean condition (the direct children of a WHERE/ON/AND paren).
-const CLAUSE_KEYWORDS = new Set<string>([...CLAUSE_START, "JOIN", "LEFT", "RIGHT", "FULL", "INNER", "CROSS", "NATURAL", "OUTER", "ON"]);
+const CLAUSE_KEYWORDS = new Set<string>([
+  ...CLAUSE_START,
+  "JOIN",
+  "LEFT",
+  "RIGHT",
+  "FULL",
+  "INNER",
+  "CROSS",
+  "NATURAL",
+  "OUTER",
+  "ON",
+]);
 
 const hasClauseKeyword = (nodes: Node[]): boolean =>
   nodes.some(
-    (n) => n.kind === "token" && n.token.type === "keyword" && CLAUSE_KEYWORDS.has(upper(n.token)),
+    (n) =>
+      n.kind === "token" &&
+      n.token.type === "keyword" &&
+      CLAUSE_KEYWORDS.has(upper(n.token)),
   );
 
 // Decides, for every top-level AND/OR token in `nodes`, whether it should
@@ -699,7 +759,8 @@ const planAndOrIndent = (nodes: Node[]): Map<number, "flush" | "bump"> => {
   let pendingBetween = false;
 
   const flushGroup = () => {
-    const mode: "flush" | "bump" = chainLengthMatters && group.length < 2 ? "flush" : "bump";
+    const mode: "flush" | "bump" =
+      chainLengthMatters && group.length < 2 ? "flush" : "bump";
     for (const i of group) result.set(i, mode);
     group = [];
   };
@@ -785,12 +846,17 @@ const isSimpleSelectFromBranch = (
     }
   }
 
-  const { items: columnItems, endIdx: afterColumns } = collectCommaItems(nodes, i, CLAUSE_START);
+  const { items: columnItems, endIdx: afterColumns } = collectCommaItems(
+    nodes,
+    i,
+    CLAUSE_START,
+  );
   for (const item of columnItems) {
     for (const node of item) {
       if (
         node.kind === "token" &&
-        (node.token.type === "line_comment" || node.token.type === "block_comment")
+        (node.token.type === "line_comment" ||
+          node.token.type === "block_comment")
       ) {
         return false;
       }
@@ -802,10 +868,17 @@ const isSimpleSelectFromBranch = (
   // columns must each get their own line - only a single column is short
   // enough to merge onto the FROM line too. Otherwise columns already stay
   // inline regardless of count.
-  if (columnItems.length > 1 && shouldExpandColumns(columnItems, opts)) return false;
+  if (columnItems.length > 1 && shouldExpandColumns(columnItems, opts))
+    return false;
 
   i = afterColumns;
-  if (i >= branchEnd || !(nodes[i].kind === "token" && isKeyword((nodes[i] as TokenNode).token, "FROM"))) {
+  if (
+    i >= branchEnd ||
+    !(
+      nodes[i].kind === "token" &&
+      isKeyword((nodes[i] as TokenNode).token, "FROM")
+    )
+  ) {
     return false; // no FROM directly after the column list
   }
   i++; // consume FROM
@@ -817,7 +890,8 @@ const isSimpleSelectFromBranch = (
       const token = node.token;
       if (isPunct(token, ",")) return false; // multi-table FROM
       if (token.type === "keyword" && upper(token) !== "AS") return false;
-      if (token.type === "line_comment" || token.type === "block_comment") return false;
+      if (token.type === "line_comment" || token.type === "block_comment")
+        return false;
     } else if (node.multiline) {
       return false;
     }
@@ -829,12 +903,19 @@ const isSimpleSelectFromBranch = (
   let width = 0;
   for (let k = selectIdx; k < branchEnd; k++) {
     const node = nodes[k];
-    width += (node.kind === "token" ? node.token.value.length : layout(node, opts)) + 1;
+    width +=
+      (node.kind === "token" ? node.token.value.length : layout(node, opts)) +
+      1;
   }
   return width <= opts.maxInlineWidth;
 };
 
-const printChildren = (p: Printer, nodes: Node[], indentLevel: number, opts: FormatterOptions) => {
+const printChildren = (
+  p: Printer,
+  nodes: Node[],
+  indentLevel: number,
+  opts: FormatterOptions,
+) => {
   let inJoinPhrase = false;
   let betweenPending = false;
   let lastKeyword = "";
@@ -890,7 +971,10 @@ const printChildren = (p: Printer, nodes: Node[], indentLevel: number, opts: For
         let hasHint = false;
         if (idx < nodes.length) {
           const hintNode = nodes[idx];
-          if (hintNode.kind === "token" && hintNode.token.type === "block_comment") {
+          if (
+            hintNode.kind === "token" &&
+            hintNode.token.type === "block_comment"
+          ) {
             printPlainToken(p, hintNode.token, opts);
             idx++;
             hasHint = true;
@@ -899,7 +983,10 @@ const printChildren = (p: Printer, nodes: Node[], indentLevel: number, opts: For
 
         if (idx < nodes.length) {
           const distinctNode = nodes[idx];
-          if (distinctNode.kind === "token" && isKeyword(distinctNode.token, "DISTINCT")) {
+          if (
+            distinctNode.kind === "token" &&
+            isKeyword(distinctNode.token, "DISTINCT")
+          ) {
             if (hasHint) {
               p.ensureBreak(indentLevel + 1);
             }
@@ -979,7 +1066,8 @@ const printChildren = (p: Printer, nodes: Node[], indentLevel: number, opts: For
           betweenPending = false;
         } else {
           const mode = andOrPlan.get(idx - 1) ?? "bump";
-          lineIndent = mode === "flush" ? clauseBaseIndent : clauseBaseIndent + 1;
+          lineIndent =
+            mode === "flush" ? clauseBaseIndent : clauseBaseIndent + 1;
           p.ensureBreak(lineIndent);
         }
         printPlainToken(p, token, opts);
@@ -1011,7 +1099,11 @@ const printChildren = (p: Printer, nodes: Node[], indentLevel: number, opts: For
         // Old-style comma-joined FROM lists get one table per line,
         // comma-first, like an expanded SELECT column list. A single
         // target (the common case) stays inline on the FROM line.
-        const { items, endIdx } = collectCommaItems(nodes, idx, FROM_STOP_KEYWORDS);
+        const { items, endIdx } = collectCommaItems(
+          nodes,
+          idx,
+          FROM_STOP_KEYWORDS,
+        );
         if (items.length > 1) {
           printCommaFirstList(p, items, indentLevel, opts);
           idx = endIdx;
@@ -1071,7 +1163,10 @@ const splitStatements = (tokens: Token[]): Token[][] => {
   return statements;
 };
 
-export const format = (sql: string, userOptions: Partial<FormatterOptions> = {}): string => {
+export const format = (
+  sql: string,
+  userOptions: Partial<FormatterOptions> = {},
+): string => {
   const opts: FormatterOptions = { ...DEFAULT_OPTIONS, ...userOptions };
 
   const allTokens = tokenize(sql).filter((t) => t.type !== "whitespace");

@@ -198,18 +198,7 @@ const OPERATORS = [
   "?",
 ];
 
-const PUNCTUATION = new Set([
-  "(",
-  ")",
-  ",",
-  ";",
-  ".",
-  "[",
-  "]",
-  "{",
-  "}",
-  ":",
-]);
+const PUNCTUATION = new Set(["(", ")", ",", ";", ".", "[", "]", "{", "}", ":"]);
 
 class Scanner {
   readonly src: string;
@@ -246,10 +235,7 @@ class Scanner {
   }
 }
 
-const matchDollarTag = (
-  scanner: Scanner,
-  offset: number,
-): string | null => {
+const matchDollarTag = (scanner: Scanner, offset: number): string | null => {
   // Matches a Postgres dollar-quote tag opener like `$$` or `$tag$`, starting
   // at `offset` (which must point at the leading `$`). Returns the full
   // opening delimiter (including both `$`) or null if this isn't one.
@@ -473,7 +459,10 @@ const readNumber = (scanner: Scanner): Token => {
   }
 
   const consumeDigits = () => {
-    while (!scanner.eof() && (isDigit(scanner.peek()) || scanner.peek() === "_")) {
+    while (
+      !scanner.eof() &&
+      (isDigit(scanner.peek()) || scanner.peek() === "_")
+    ) {
       scanner.advance();
     }
   };
@@ -699,7 +688,11 @@ export const tokenize = (src: string): Token[] => {
       }
     }
 
-    if (ch === ":" && scanner.peek(1) !== ":" && isIdentStart(scanner.peek(1))) {
+    if (
+      ch === ":" &&
+      scanner.peek(1) !== ":" &&
+      isIdentStart(scanner.peek(1))
+    ) {
       tokens.push(readParameter(scanner));
       continue;
     }

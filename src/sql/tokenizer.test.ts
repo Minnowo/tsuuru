@@ -50,10 +50,7 @@ describe("comments", () => {
   it("tokenizes block comments, including nested ones", () => {
     const tokens = significant("/* outer /* inner */ still outer */ SELECT");
     assert.equal(tokens[0].type, "block_comment");
-    assert.equal(
-      tokens[0].value,
-      "/* outer /* inner */ still outer */",
-    );
+    assert.equal(tokens[0].value, "/* outer /* inner */ still outer */");
   });
 });
 
